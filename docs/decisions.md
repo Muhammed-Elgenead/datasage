@@ -168,3 +168,23 @@ Newest at the bottom. Format: context → decision → alternatives considered.
   - runs 2 cases at a time (down from 3)
 
   That polluted report was deleted instead of committed, because it measured the outage, not the agent. The same run also exposed a backend bug: a slow `docker run` raised an uncaught `TimeoutExpired`, which would have been a 500 in the app. Starting the sandbox now gets 90 s, and a slow start becomes `SandboxUnavailable` (503).
+
+## 2026-11-17 — Production packaging and public-instance guards (Phase 7)
+
+- **Context:** The public deployment is postponed (your decision). Everything else in Phase 7 should be ready, so a deployment needs only a host.
+- **Decision:**
+  - **One image** (root `Dockerfile`): the Vite build, then the backend on the GHCR `uv` base, with the frontend in `/app/static`, plus the Docker CLI copied from `docker:29-cli`. The app serves the same routes at `/x` (dev, where Vite strips `/api`) and `/api/x` (production, one origin), and serves the SPA at `/`. It runs as root because it holds the Docker socket, which is root-equivalent anyway. Untrusted code runs only in sandboxes (uid 10001, with every limit). `backend/Dockerfile` was removed.
+  - **Compose:** `db`, plus `sandbox-image` (builds `datasage-sandbox:latest`, then exits), plus `app`. The app mounts `/var/run/docker.sock`. The data folder is mounted at the **same absolute path** inside and outside (`${PWD}/data`), so the bind-mount paths the app passes to Docker are valid on the host, with no translation setting.
+  - **Guards:**
+    - an ASGI middleware returns 413 for `Content-Length` above the upload limit plus 1 MB, before the body is read (chunked uploads need a proxy limit, as noted in the code)
+    - an in-process rolling limit of `ASK_LIMIT_PER_HOUR` questions per client IP returns 429 with `Retry-After`
+    - an hourly task deletes sessions older than `SESSION_TTL_DAYS` (database rows cascade, then the folders are removed)
+  - **CI** (`.github/workflows/ci.yml`) has three jobs:
+    - ruff and pytest on Postgres 16, with the sandbox image built so the real-container tests run
+    - frontend typecheck, Vitest and build
+    - a Compose smoke test: the app's health, the SPA, an upload and its profile, a 503 without an LLM key, and a sandbox started from inside the app container (no network, uid 10001, no leftover containers)
+- **Alternatives:**
+  - Render (TaskPilot's host): no Docker daemon for the sandboxes.
+  - Fly.io Machines as sandboxes: would mean rewriting the sandbox client for Fly's API.
+  - Docker-in-Docker: privileged, so weaker than using the host's daemon.
+  - A Redis-backed rate limit: not needed for one process.

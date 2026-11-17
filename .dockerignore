@@ -1,0 +1,14 @@
+# Never send secrets or user data into an image.
+.env
+data/
+.tmp/
+.git/
+
+**/node_modules/
+**/dist/
+**/.venv/
+**/__pycache__/
+**/.pytest_cache/
+**/.ruff_cache/
+docs/
+evals/

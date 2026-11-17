@@ -205,6 +205,7 @@ async def get_chart(session_id: uuid.UUID, run_id: str, name: str, request: Requ
 
 @router.post("/{session_id}/ask")
 async def ask_question(session_id: uuid.UUID, body: AskIn, request: Request, db: DB) -> AnswerOut:
+    request.app.state.ask_limiter.check(request)
     try:
         question, runs = await ask(
             db,
@@ -233,6 +234,7 @@ async def ask_stream(session_id: uuid.UUID, body: AskIn, request: Request) -> St
     """Server-Sent Events over POST (the browser reads them with fetch). Progress events
     (thinking, tool, code, run) end with one `answer` or `error` event. The run isn't tied
     to the connection: if the client leaves, it still finishes and is stored."""
+    request.app.state.ask_limiter.check(request)  # a plain 429, before the stream starts
     app = request.app
     queue: asyncio.Queue[str | None] = asyncio.Queue()
 

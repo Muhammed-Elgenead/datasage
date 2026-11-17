@@ -67,6 +67,13 @@ class Settings(BaseSettings):
     agent_max_iterations: int = 12
     agent_max_code_errors: int = 3
 
+    # Public-instance guards. Questions per client IP per hour (0 = no limit), and how long
+    # sessions and their files are kept (0 = forever).
+    ask_limit_per_hour: int = 30
+    session_ttl_days: int = 7
+    # Built frontend (frontend/dist) to serve at "/" (the production image sets it).
+    static_dir: str = ""
+
 
 @lru_cache
 def get_settings() -> Settings:

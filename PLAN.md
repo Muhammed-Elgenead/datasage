@@ -114,7 +114,11 @@ Status: ⬜ not started · 🟨 in progress · ✅ done
 
 ---
 
-## Phase 7 — Deploy ⬜
+## Phase 7 — Deploy 🟨
+
+> 2026-11-17: the public deployment is postponed (your decision). Done: the production image (`Dockerfile`), production Compose (Postgres, app, sandbox image, app → host Docker socket, same-path data mount), the CI workflow, the body-size cap, the per-IP question limit, cleanup of old sessions, and the README.
+> Waiting: a GitHub repo (you're creating it) so CI can run on `main`. Locally, the backend tests pass (124), Compose config is valid, and the built frontend plus `/api` serve from one origin. The production image itself only builds in CI (Docker Hub is blocked here).
+> Deferred with the deploy: choosing a host, a size-limited `/out` volume, gVisor, a reverse proxy with a body limit, and the demo GIF.
 
 **Goal:** a public demo that anyone can try.
 
