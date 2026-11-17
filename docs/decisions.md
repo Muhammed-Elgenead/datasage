@@ -188,3 +188,10 @@ Newest at the bottom. Format: context → decision → alternatives considered.
   - Fly.io Machines as sandboxes: would mean rewriting the sandbox client for Fly's API.
   - Docker-in-Docker: privileged, so weaker than using the host's daemon.
   - A Redis-backed rate limit: not needed for one process.
+- **Follow-up (same day): what the first CI runs caught.** It took 5 pushes to get green; each fix is its own commit:
+  1. A Windows-only test (WSL path translation) ran on Linux. It's now skipped off Windows.
+  2. pytest's base temp folder sat under the gitignored `.tmp/`, so it was missing in a fresh checkout. It moved to `backend/.pytest-tmp`.
+  3. `STATIC_DIR=` (empty) in `.env.example` overrode the image's value through Compose's `env_file`. Compose now sets it.
+  4. **A production-only crash:** `providers.py` imported `httpx`, a dev-only dependency. Tests always have dev dependencies installed, so only the Compose smoke test could catch it. The code now catches `httpx2` errors (google-genai's actual transport), and `httpx` errors only when it's installed.
+
+  CI also publishes failing tests and the app's last log lines as annotations, because GitHub's job logs need a login.

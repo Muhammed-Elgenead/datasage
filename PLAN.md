@@ -131,5 +131,5 @@ Status: ⬜ not started · 🟨 in progress · ✅ done
 - A README with an architecture diagram, a demo GIF, and the eval results.
 
 **Done when:**
-- [ ] CI is green on main
+- [x] CI is green on main (run #5, commit 55e3eba: backend with real sandbox containers, frontend, and the production image + Compose smoke test)
 - [ ] the public URL works end to end, and the sandbox limits have been checked on the deployed host
