@@ -31,6 +31,7 @@ services:
       DATA_DIR: ${PWD}/data
       SANDBOX_DOCKER: docker
       SANDBOX_WSL_PATHS: "false"
+      STATIC_DIR: /app/static  # env_file's empty STATIC_DIR= would otherwise override the image
     volumes:
       - ${PWD}/data:${PWD}/data
       - /var/run/docker.sock:/var/run/docker.sock  # only the app gets it, never a sandbox
