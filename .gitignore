@@ -1,0 +1,25 @@
+# secrets
+.env
+
+# local temp, caches and uploaded data (never on C:)
+.tmp/
+.cache/
+data/
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# node
+node_modules/
+dist/
+*.tsbuildinfo
+
+# editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,9 @@
+# Keep LF in the repo and working tree (Dockerfiles, shell, CI run on Linux).
+* text=auto eol=lf
+
+# Windows-only scripts keep CRLF.
+*.ps1 text eol=crlf
+
+# Lockfiles: never merge-diff line by line.
+uv.lock linguist-generated=true
+package-lock.json linguist-generated=true
