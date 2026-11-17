@@ -6,7 +6,7 @@ import uuid
 from collections import defaultdict
 from collections.abc import AsyncIterator
 from datetime import datetime
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, UploadFile
 from fastapi.responses import StreamingResponse
@@ -48,6 +48,8 @@ class DatasetOut(BaseModel):
 
 class AskIn(BaseModel):
     question: str = Field(min_length=1, max_length=4000)
+    # auto: the agent picks pandas or SQL; python / sql: the user forces one.
+    mode: Literal["auto", "python", "sql"] = "auto"
 
 
 class AnswerOut(BaseModel):
@@ -59,6 +61,7 @@ class AnswerOut(BaseModel):
     # The run whose output the user sees: the last successful one, else the last attempt.
     run_id: str | None
     code: str | None
+    language: str | None  # python | sql: what `code` is
     code_error: str | None
     tables: list[Table]
     charts: list[str]  # GET /sessions/{session_id}/runs/{run_id}/{chart}
@@ -94,6 +97,7 @@ def answer_out(question: Question, runs: list[CodeRun]) -> AnswerOut:
         error=question.error,
         run_id=shown.id if shown else None,
         code=shown.code if shown else None,
+        language=shown.language if shown else None,
         code_error=result.get("error"),
         tables=result.get("tables", []),
         charts=result.get("charts", []),
@@ -203,7 +207,12 @@ async def get_chart(session_id: uuid.UUID, run_id: str, name: str, request: Requ
 async def ask_question(session_id: uuid.UUID, body: AskIn, request: Request, db: DB) -> AnswerOut:
     try:
         question, runs = await ask(
-            db, request.app.state.settings, request.app.state.llm, session_id, body.question
+            db,
+            request.app.state.settings,
+            request.app.state.llm,
+            session_id,
+            body.question,
+            mode=body.mode,
         )
     except QuestionError as exc:
         raise HTTPException(exc.status_code, exc.detail) from exc
@@ -234,7 +243,13 @@ async def ask_stream(session_id: uuid.UUID, body: AskIn, request: Request) -> St
         try:
             async with app.state.db.sessions() as db:
                 question, runs = await ask(
-                    db, app.state.settings, app.state.llm, session_id, body.question, emit
+                    db,
+                    app.state.settings,
+                    app.state.llm,
+                    session_id,
+                    body.question,
+                    emit,
+                    body.mode,
                 )
                 answer = answer_out(question, runs)
             await queue.put(sse("answer", answer.model_dump(mode="json")))

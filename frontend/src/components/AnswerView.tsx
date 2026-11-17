@@ -44,7 +44,7 @@ export default function AnswerView({ sessionId, answer }: { sessionId: string; a
         {answer.code && (
           <details className="group rounded-md border border-slate-200">
             <summary className="cursor-pointer select-none px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
-              Code used
+              {answer.language === "sql" ? "SQL used" : "Code used"}
               {answer.attempts > 1 && (
                 <span className="font-normal text-slate-500"> · {answer.attempts} attempts</span>
               )}

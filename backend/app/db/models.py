@@ -64,6 +64,7 @@ class CodeRun(Base):
     )
     seq: Mapped[int]  # order within the question
     code: Mapped[str] = mapped_column(Text)
+    language: Mapped[str] = mapped_column(String(8), server_default="python")  # python | sql
     status: Mapped[str] = mapped_column(String(16))
     result: Mapped[dict[str, Any]] = mapped_column(JSONB)  # the validated SandboxResult
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

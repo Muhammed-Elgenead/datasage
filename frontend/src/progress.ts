@@ -8,6 +8,7 @@ export type Step =
   | {
       kind: "code";
       attempt: number;
+      language: "python" | "sql";
       code: string;
       status: "running" | "ok" | "failed";
       error: string | null;
@@ -22,7 +23,14 @@ export function addProgress(steps: Step[], event: ProgressEvent): Step[] {
     case "code":
       return [
         ...steps,
-        { kind: "code", attempt: event.attempt, code: event.code, status: "running", error: null },
+        {
+          kind: "code",
+          attempt: event.attempt,
+          language: event.language,
+          code: event.code,
+          status: "running",
+          error: null,
+        },
       ];
     case "run":
       return steps.map((s) =>

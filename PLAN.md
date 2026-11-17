@@ -82,7 +82,9 @@ Status: ⬜ not started · 🟨 in progress · ✅ done
 
 ---
 
-## Phase 5 — SQL mode ⬜
+## Phase 5 — SQL mode ✅
+
+> Verified 2026-11-17 on `gemini-3.5-flash-lite`: forced SQL (orders per region, one query, 9 s) and auto mode (the agent chose pandas for text-encoded prices, 17 s). Both match the ground truth exactly.
 
 **Goal:** ask the same questions with SQL as well as pandas.
 
@@ -91,8 +93,8 @@ Status: ⬜ not started · 🟨 in progress · ✅ done
 - The answer shows the SQL used. Error-and-fix works the same way as in pandas mode.
 
 **Done when:**
-- [ ] tests with a mocked LLM cover SQL success, SQL errors and fixes, and the choice between pandas and SQL
-- [ ] SQL runs inside the sandbox with the same limits as Python, and a test proves it
+- [x] tests with a mocked LLM cover SQL success, SQL errors and fixes, and the choice between pandas and SQL (auto offers both, forced modes offer one, and tools outside the mode are refused)
+- [x] SQL runs inside the sandbox with the same limits as Python, and a test proves it (identical `docker run` arguments; real-container tests for no file, network or extension access, locked settings, and a runaway query stopped by the limits)
 
 ---
 

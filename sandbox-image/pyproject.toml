@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Packages available to code running in the DataSage sandbox"
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "duckdb>=2.0.0",
     "matplotlib>=3.11.2",
     "numpy>=2.5.5",
     "openpyxl>=3.1.5",

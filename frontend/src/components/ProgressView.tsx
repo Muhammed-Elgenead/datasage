@@ -6,10 +6,12 @@ function label(step: Step): string {
       return step.step === 1 ? "Thinking about the question" : "Thinking";
     case "profile":
       return "Reading the data profile";
-    case "code":
-      if (step.status === "running") return `Running code (attempt ${step.attempt})`;
-      if (step.status === "ok") return `Code ran (attempt ${step.attempt})`;
-      return `Code failed (attempt ${step.attempt}), fixing it`;
+    case "code": {
+      const what = step.language === "sql" ? "SQL" : "Code";
+      if (step.status === "running") return `Running ${step.language === "sql" ? "SQL" : "code"} (attempt ${step.attempt})`;
+      if (step.status === "ok") return `${what} ran (attempt ${step.attempt})`;
+      return `${what} failed (attempt ${step.attempt}), fixing it`;
+    }
   }
 }
 

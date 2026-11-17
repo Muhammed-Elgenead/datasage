@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -11,6 +12,7 @@ from app.api.sessions import router as sessions_router
 from app.core.config import Settings, get_settings
 from app.db.models import Question
 from app.db.session import Database
+from app.sandbox.client import remove_leftover_containers
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +37,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         await fail_interrupted_questions(app.state.db)
+        await asyncio.to_thread(remove_leftover_containers, settings)
         yield
         await app.state.db.dispose()
 

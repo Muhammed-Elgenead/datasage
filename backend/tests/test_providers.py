@@ -74,7 +74,7 @@ async def test_request_config() -> None:
     assert config.system_instruction == "system prompt"
     assert config.automatic_function_calling.disable is True
     decls = config.tools[0].function_declarations
-    assert [d.name for d in decls] == ["get_profile", "run_python"]
+    assert [d.name for d in decls] == ["get_profile", "run_python", "run_sql"]
     assert decls[1].parameters_json_schema["required"] == ["code"]
 
 

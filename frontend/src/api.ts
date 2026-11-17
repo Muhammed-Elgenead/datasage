@@ -1,5 +1,5 @@
 import { SSEParser } from "./sse";
-import type { Answer, Dataset, ProgressEvent, SessionDetail, SessionSummary } from "./types";
+import type { Answer, Dataset, Mode, ProgressEvent, SessionDetail, SessionSummary } from "./types";
 
 export class ApiError extends Error {
   constructor(
@@ -48,12 +48,13 @@ export async function askStream(
   sessionId: string,
   question: string,
   onProgress: (event: ProgressEvent) => void,
+  mode: Mode = "auto",
   signal?: AbortSignal,
 ): Promise<Answer> {
   const res = await fetch(`/api/sessions/${sessionId}/ask/stream`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ question }),
+    body: JSON.stringify({ question, mode }),
     signal,
   });
   if (!res.ok || !res.body) throw new ApiError(res.status, await errorDetail(res));

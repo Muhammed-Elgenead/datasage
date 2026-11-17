@@ -29,11 +29,11 @@ test("asking streams progress, then shows the stored answer", async () => {
     if (url === "/api/sessions") return json([summary]);
     if (url.endsWith("/ask/stream")) {
       asked = true;
-      expect(JSON.parse(init!.body as string)).toEqual({ question: "Total revenue?" });
+      expect(JSON.parse(init!.body as string)).toEqual({ question: "Total revenue?", mode: "sql" });
       await streamGate;
       return sse(
         ["thinking", { type: "thinking", step: 1 }],
-        ["code", { type: "code", attempt: 1, code: "df.revenue.sum()" }],
+        ["code", { type: "code", attempt: 1, language: "python", code: "df.revenue.sum()" }],
         ["run", { type: "run", attempt: 1, status: "ok", error: null, tables: 0, charts: 0 }],
         ["answer", followUp],
       );
@@ -44,6 +44,7 @@ test("asking streams progress, then shows the stored answer", async () => {
   render(<App />);
   await screen.findByText("North leads with 100.");
 
+  fireEvent.click(screen.getByRole("radio", { name: "SQL" })); // force SQL for this question
   fireEvent.change(screen.getByLabelText("Your question"), { target: { value: "Total revenue?" } });
   fireEvent.click(screen.getByRole("button", { name: "Ask" }));
 

@@ -4,6 +4,7 @@ import json
 import os
 import uuid
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -112,3 +113,55 @@ def test_missing_docker_is_unavailable(tmp_path: Path) -> None:
     s = Settings(data_dir=tmp_path, sandbox_docker="no-such-docker-binary")
     with pytest.raises(SandboxUnavailable):
         run_code_sync(s, uuid.uuid4(), "1")
+
+
+def test_sql_runs_use_the_same_container_limits(
+    s: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Python and SQL differ only in the files written to /out, never in `docker run`."""
+    from app.sandbox import client
+
+    calls: list[list[str]] = []
+
+    def fake_docker(settings, *args, timeout=30):  # type: ignore[no-untyped-def]
+        calls.append(list(args))
+        return SimpleNamespace(returncode=1, stdout="", stderr="stop here")
+
+    monkeypatch.setattr(client, "_docker", fake_docker)
+    session = uuid.uuid4()
+    for tables in (None, {"sales": "/data/x.csv"}):
+        with pytest.raises(SandboxUnavailable):
+            run_code_sync(s, session, "SELECT 1", tables)
+
+    python_run, _, sql_run, _ = calls  # each attempt: run, then rm --force
+
+    def normalise(args: list[str]) -> list[str]:
+        return [
+            a for a in args if "datasage-sbx-" not in a and "/runs/" not in a.replace("\\", "/")
+        ]
+
+    assert normalise(python_run) == normalise(sql_run)
+    sql_dir = s.data_dir / str(session) / "runs"
+    written = {p.name for d in sql_dir.iterdir() for p in d.iterdir()}
+    assert written == {"code.py", "query.sql", "tables.json"}
+
+
+def test_leftover_containers_are_removed(s: Settings, monkeypatch: pytest.MonkeyPatch) -> None:
+    from app.sandbox import client
+
+    calls: list[tuple[str, ...]] = []
+
+    def fake_docker(settings, *args, timeout=30):  # type: ignore[no-untyped-def]
+        calls.append(args)
+        return SimpleNamespace(returncode=0, stdout="abc\ndef\n" if args[0] == "ps" else "")
+
+    monkeypatch.setattr(client, "_docker", fake_docker)
+    assert client.remove_leftover_containers(s) == 2
+    assert calls[0] == ("ps", "-aq", "--filter", "name=datasage-sbx-")
+    assert calls[1] == ("rm", "--force", "abc", "def")
+
+
+def test_leftover_cleanup_tolerates_docker_down(tmp_path: Path) -> None:
+    from app.sandbox.client import remove_leftover_containers
+
+    assert remove_leftover_containers(Settings(sandbox_docker="no-such-docker-binary")) == 0

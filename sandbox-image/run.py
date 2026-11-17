@@ -7,6 +7,9 @@ and validates it again.
 The code can call `show(obj, title=None)` to return a DataFrame/Series as a table. If the
 last statement is an expression, its value is shown too (a table for DataFrame/Series,
 otherwise its repr).
+
+SQL mode: when the backend writes /out/query.sql (and /out/tables.json, mapping table names
+to files under /data), the query runs in DuckDB over those tables instead.
 """
 
 import ast
@@ -70,8 +73,37 @@ def to_table(obj: Any, title: str | None) -> dict[str, Any]:
     }
 
 
+def read_table(path: str) -> pd.DataFrame:
+    """Same reading rules as the backend's profiling (app/services/profiling.py)."""
+    if path.endswith(".csv"):
+        df = pd.read_csv(path, encoding_errors="replace")
+    else:
+        df = pd.read_excel(path, sheet_name=0)
+    df.columns = [str(c) for c in df.columns]
+    return df
+
+
+def run_sql(query: str, show: Any) -> str | None:
+    """Run DuckDB SQL over the session's files, each loaded as a table."""
+    import duckdb
+
+    con = duckdb.connect()
+    with open(os.path.join(OUT, "tables.json"), encoding="utf-8") as f:
+        for name, path in json.load(f).items():
+            con.register(name, read_table(path))
+    # The query sees only these tables: no file or network access, and it can't undo that.
+    con.execute("SET enable_external_access = false")
+    con.execute("SET lock_configuration = true")
+    relation = con.sql(query)
+    if relation is None:  # a statement without a result set
+        return "Statement executed."
+    show(relation.df())
+    return None
+
+
 def main() -> None:
-    with open(os.path.join(OUT, "code.py"), encoding="utf-8") as f:
+    sql_mode = os.path.exists(os.path.join(OUT, "query.sql"))
+    with open(os.path.join(OUT, "query.sql" if sql_mode else "code.py"), encoding="utf-8") as f:
         source = f.read()
     linecache.cache["<code>"] = (len(source), None, source.splitlines(True), "<code>")
 
@@ -101,22 +133,28 @@ def main() -> None:
 
     with redirect_stdout(stdout), redirect_stderr(stderr):
         try:
-            tree = ast.parse(source, "<code>")
-            last = tree.body.pop() if tree.body and isinstance(tree.body[-1], ast.Expr) else None
-            exec(compile(tree, "<code>", "exec"), namespace)
-            if last is not None:
-                value = eval(compile(ast.Expression(last.value), "<code>", "eval"), namespace)
-                if isinstance(value, pd.DataFrame | pd.Series):
-                    show(value)
-                elif value is not None:
-                    result = repr(value)[:MAX_CHARS]
+            if sql_mode:
+                result = run_sql(source, show)
+            else:
+                tree = ast.parse(source, "<code>")
+                last = tree.body.pop() if tree.body and isinstance(tree.body[-1], ast.Expr) else None
+                exec(compile(tree, "<code>", "exec"), namespace)
+                if last is not None:
+                    value = eval(compile(ast.Expression(last.value), "<code>", "eval"), namespace)
+                    if isinstance(value, pd.DataFrame | pd.Series):
+                        show(value)
+                    elif value is not None:
+                        result = repr(value)[:MAX_CHARS]
         except SystemExit:
             pass
         except BaseException as exc:
-            tb = exc.__traceback__
-            while tb is not None and tb.tb_frame.f_code.co_filename != "<code>":
-                tb = tb.tb_next  # hide the runner's own frames
-            error = "".join(traceback.format_exception(type(exc), exc, tb))[-MAX_CHARS:]
+            if sql_mode:  # the runner's frames say nothing useful about a SQL error
+                error = f"{type(exc).__name__}: {exc}"[-MAX_CHARS:]
+            else:
+                tb = exc.__traceback__
+                while tb is not None and tb.tb_frame.f_code.co_filename != "<code>":
+                    tb = tb.tb_next  # hide the runner's own frames
+                error = "".join(traceback.format_exception(type(exc), exc, tb))[-MAX_CHARS:]
 
     charts: list[str] = []
     fignums = plt.get_fignums()

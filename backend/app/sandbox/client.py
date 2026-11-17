@@ -162,13 +162,24 @@ def _docker(
         raise SandboxUnavailable(f"cannot run {settings.sandbox_docker!r}: {exc}") from exc
 
 
-def run_code_sync(settings: Settings, session_id: uuid.UUID, code: str) -> SandboxResult:
+def run_code_sync(
+    settings: Settings,
+    session_id: uuid.UUID,
+    code: str,
+    sql_tables: dict[str, str] | None = None,
+) -> SandboxResult:
+    """`sql_tables` (table name -> path under /data) makes `code` a DuckDB query; the
+    container and its limits are the same either way."""
     run_id = uuid.uuid4().hex
     session_dir = settings.data_dir / str(session_id)
     out_dir = session_dir / "runs" / run_id
     out_dir.mkdir(parents=True)
     os.chmod(out_dir, 0o777)  # the sandbox user (uid 10001) must be able to write here
-    (out_dir / "code.py").write_text(code, encoding="utf-8")
+    if sql_tables is None:
+        (out_dir / "code.py").write_text(code, encoding="utf-8")
+    else:
+        (out_dir / "query.sql").write_text(code, encoding="utf-8")
+        (out_dir / "tables.json").write_text(json.dumps(sql_tables), encoding="utf-8")
     name = CONTAINER_PREFIX + run_id
 
     def done(status: str, **fields: Any) -> SandboxResult:
@@ -201,7 +212,26 @@ def run_code_sync(settings: Settings, session_id: uuid.UUID, code: str) -> Sandb
             _docker(settings, "rm", "--force", name)
 
 
-async def run_code(settings: Settings, session_id: uuid.UUID, code: str) -> SandboxResult:
-    """Run `code` against the session's files. Raises SandboxUnavailable for Docker problems;
-    problems in the code itself come back as the result's status."""
-    return await asyncio.to_thread(run_code_sync, settings, session_id, code)
+async def run_code(
+    settings: Settings,
+    session_id: uuid.UUID,
+    code: str,
+    sql_tables: dict[str, str] | None = None,
+) -> SandboxResult:
+    """Run `code` (or a SQL query, see run_code_sync) against the session's files. Raises
+    SandboxUnavailable for Docker problems; problems in the code come back as the status."""
+    return await asyncio.to_thread(run_code_sync, settings, session_id, code, sql_tables)
+
+
+def remove_leftover_containers(settings: Settings) -> int:
+    """Remove sandbox containers left by a backend that died mid-run (its `finally` never
+    ran). Returns how many were removed; Docker being down is not an error here."""
+    # shortcut: assumes one backend per Docker host; with several, filter by an owner label
+    try:
+        found = _docker(settings, "ps", "-aq", "--filter", f"name={CONTAINER_PREFIX}")
+        ids = found.stdout.split() if found.returncode == 0 else []
+        if ids:
+            _docker(settings, "rm", "--force", *ids)
+        return len(ids)
+    except (SandboxUnavailable, subprocess.TimeoutExpired):
+        return 0

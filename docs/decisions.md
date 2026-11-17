@@ -120,3 +120,19 @@ Newest at the bottom. Format: context → decision → alternatives considered.
   - WebSockets: two-way messaging isn't needed.
   - Polling the questions table: slower and more code.
   - `react-markdown`: a dependency we don't need once answers are plain text.
+
+## 2026-11-17 — SQL mode with DuckDB in the sandbox (Phase 5)
+
+- **Context:** Users can ask the same questions answered with SQL. The SQL must run with exactly the same isolation as Python.
+- **Decision:**
+  - **DuckDB 2.0 inside the existing sandbox image**, with no database server. The backend writes `query.sql` and `tables.json` (table name → `/data/<file>`) into the run folder instead of `code.py`, so the `docker run` arguments are identical for both languages (a unit test compares them).
+  - **Each file is loaded with pandas** (the same reading rules as profiling) and registered as a DuckDB table. Then `enable_external_access = false` and `lock_configuration = true` are set, so a query can see only those tables: no `read_csv`, `glob`, `COPY … TO`, `ATTACH`, or `INSTALL`, and it can't turn access back on. Real-container tests try each of these.
+  - **Table names come from the original filename** (`Q3 Sales.xlsx` → `q3_sales`, with `t_` prefixed if it starts with a digit and `_2` added for duplicates). `get_profile` shows them as `sql_table`.
+  - **A `run_sql(query)` tool** sits next to `run_python`. SQL errors come back as `ExceptionType: message`, with no Python frames. Failed SQL runs count toward the same retry limit.
+  - **Choosing a language:** `AskIn.mode` is `auto`, `python` or `sql`. Auto offers both tools, and the prompt suggests SQL for clean filtering, grouping and joins, and pandas for messy cleaning and every chart. A forced mode offers only that tool, adds a one-line note to the system prompt, and refuses any other tool as an `is_error` result. Each stored run records its `language` (migration 0003), and the answer reports which language its `code` is in.
+  - **The frontend** has an "Answer with: Auto / Python / SQL" choice above the question box, and labels each answer "SQL used" or "Code used" and each progress step "Running SQL" or "Running code".
+  - **Startup** removes `datasage-sbx-*` containers left by a backend that died mid-run (found during this phase: one left over from a killed Phase 3 run). This assumes one backend per Docker host, as noted in the code.
+- **Alternatives:**
+  - DuckDB reading the files directly (`read_csv_auto`): it would need file access in SQL, the XLSX extension needs network to install, and the types could differ from the profile.
+  - SQLite: weaker analytics SQL and no DataFrame registration.
+  - A single "language" argument on one tool: two tools give the model clearer descriptions and let a forced mode simply remove one.

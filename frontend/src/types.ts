@@ -47,6 +47,7 @@ export interface Answer {
   error: string | null;
   run_id: string | null;
   code: string | null;
+  language: "python" | "sql" | null;
   code_error: string | null;
   tables: Table[];
   charts: string[];
@@ -70,11 +71,13 @@ export interface SessionDetail {
   questions: Answer[];
 }
 
+export type Mode = "auto" | "python" | "sql";
+
 // Live progress while the agent works (POST /sessions/{id}/ask/stream).
 export type ProgressEvent =
   | { type: "thinking"; step: number }
   | { type: "tool"; name: string }
-  | { type: "code"; attempt: number; code: string }
+  | { type: "code"; attempt: number; language: "python" | "sql"; code: string }
   | {
       type: "run";
       attempt: number;

@@ -61,9 +61,12 @@ class FakeSandbox:
     def __init__(self, *results: SandboxResult | Exception) -> None:
         self.results = list(results)
         self.codes: list[str] = []
+        self.languages: list[str] = []
+        self.sql_tables: dict[str, str] | None = None  # set by the API tests
 
-    async def __call__(self, code: str) -> SandboxResult:
+    async def __call__(self, code: str, language: str = "python") -> SandboxResult:
         self.codes.append(code)
+        self.languages.append(language)
         item = self.results.pop(0)
         if isinstance(item, Exception):
             raise item

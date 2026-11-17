@@ -32,6 +32,7 @@ export const answer: Answer = {
   error: null,
   run_id: RUN,
   code: "df.groupby('region').sum()",
+  language: "python",
   code_error: null,
   tables: [{ title: null, columns: ["region", "revenue"], rows: [["north", 100], ["south", 250.5]], total_rows: 2, truncated: false }],
   charts: ["chart_1.png"],

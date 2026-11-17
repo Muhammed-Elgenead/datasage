@@ -1,6 +1,7 @@
 """Answer a question: run the agent against the session's files and store everything."""
 
 import json
+import re
 import uuid
 from datetime import UTC, datetime
 
@@ -21,10 +22,29 @@ class QuestionError(Exception):
         self.detail = detail
 
 
-def profile_text(datasets: list[Dataset]) -> str:
+def sql_tables(datasets: list[Dataset]) -> dict[str, str]:
+    """A SQL table name per file, from its original name ("Q3 Sales.xlsx" -> q3_sales)."""
+    tables: dict[str, str] = {}
+    for d in datasets:
+        base = re.sub(r"\W+", "_", d.filename.rsplit(".", 1)[0].lower()).strip("_") or "data"
+        base = f"t_{base}" if base[0].isdigit() else base
+        name, n = base, 2
+        while name in tables:
+            name, n = f"{base}_{n}", n + 1
+        tables[name] = f"/data/{d.stored_name}"
+    return tables
+
+
+def profile_text(datasets: list[Dataset], tables: dict[str, str]) -> str:
+    table_of = {path: name for name, path in tables.items()}
     return json.dumps(
         [
-            {"path": f"/data/{d.stored_name}", "uploaded_as": d.filename, "profile": d.profile}
+            {
+                "path": f"/data/{d.stored_name}",
+                "sql_table": table_of[f"/data/{d.stored_name}"],
+                "uploaded_as": d.filename,
+                "profile": d.profile,
+            }
             for d in datasets
         ]
     )
@@ -37,6 +57,7 @@ async def ask(
     session_id: uuid.UUID,
     text: str,
     on_event: EventSink | None = None,
+    mode: str = "auto",
 ) -> tuple[Question, list[CodeRun]]:
     if await db.get(Session, session_id) is None:
         raise QuestionError(404, "Session not found")
@@ -54,15 +75,18 @@ async def ask(
     db.add(question)
     await db.commit()
 
-    async def run_python(code: str) -> SandboxResult:
-        return await run_code(settings, session_id, code)
+    tables = sql_tables(datasets)
+
+    async def run(code: str, language: str) -> SandboxResult:
+        return await run_code(settings, session_id, code, tables if language == "sql" else None)
 
     state = AgentState()
     failure: QuestionError | None = None
     try:
         limits = Limits(settings.agent_max_iterations, settings.agent_max_code_errors)
         events = {"on_event": on_event} if on_event else {}
-        await run_agent(llm, limits, text, profile_text(datasets), run_python, state, **events)
+        profile = profile_text(datasets, tables)
+        await run_agent(llm, limits, text, profile, run, state, mode=mode, **events)
     except LLMError as exc:
         failure = QuestionError(exc.status_code, exc.message)
     except SandboxUnavailable as exc:
@@ -81,6 +105,7 @@ async def ask(
                 question_id=question.id,
                 seq=i,
                 code=a.code,
+                language=a.language,
                 status=a.result.status,
                 result=a.result.model_dump(mode="json"),
             )

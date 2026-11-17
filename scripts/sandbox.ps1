@@ -15,7 +15,8 @@ param(
     [ValidateSet('start', 'build', 'stop')]
     [string]$Action = 'start'
 )
-$ErrorActionPreference = 'Stop'
+# No $ErrorActionPreference = 'Stop': in PowerShell 5.1 it aborts on any stderr line from
+# docker (even warnings). Each native call checks $LASTEXITCODE instead.
 $Distro = 'Ubuntu-24.04'
 $root = Split-Path -Parent $PSScriptRoot
 
@@ -31,7 +32,7 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 Write-Output 'Docker is running in WSL.'
 
 if ($Action -eq 'build') {
-    $src = wsl -d $Distro -e wslpath -a (($root -replace '\', '/') + '/sandbox-image')
+    $src = wsl -d $Distro -e wslpath -a (($root -replace '\\', '/') + '/sandbox-image')
     # BuildKit (buildx) isn't installed in WSL; the legacy builder is enough here.
     wsl -d $Distro -u root -e env DOCKER_BUILDKIT=0 docker build -t datasage-sandbox:latest $src
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

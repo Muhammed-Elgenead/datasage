@@ -7,7 +7,7 @@ import ProgressView from "./components/ProgressView";
 import Sidebar from "./components/Sidebar";
 import UploadZone from "./components/UploadZone";
 import { addProgress, type Step } from "./progress";
-import type { SessionDetail, SessionSummary } from "./types";
+import type { Mode, SessionDetail, SessionSummary } from "./types";
 
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
@@ -16,6 +16,7 @@ export default function App() {
   const [current, setCurrent] = useState<SessionDetail | null>(null);
   const [pending, setPending] = useState<{ question: string; steps: Step[] } | null>(null);
   const [draft, setDraft] = useState("");
+  const [mode, setMode] = useState<Mode>("auto");
   const [error, setError] = useState<string | null>(null);
   const end = useRef<HTMLDivElement>(null);
 
@@ -70,8 +71,11 @@ export default function App() {
     setError(null);
     setPending({ question, steps: [] });
     try {
-      await askStream(sessionId, question, (event) =>
-        setPending((p) => (p ? { ...p, steps: addProgress(p.steps, event) } : p)),
+      await askStream(
+        sessionId,
+        question,
+        (event) => setPending((p) => (p ? { ...p, steps: addProgress(p.steps, event) } : p)),
+        mode,
       );
     } catch (e) {
       setError(message(e));
@@ -166,6 +170,34 @@ export default function App() {
             }}
             className="border-t border-slate-200 bg-white"
           >
+            <fieldset className="mx-auto flex max-w-4xl items-center gap-1 px-4 pt-2 text-xs text-slate-600">
+              <legend className="sr-only">Answer with</legend>
+              <span aria-hidden="true" className="mr-1">Answer with:</span>
+              {(
+                [
+                  ["auto", "Auto"],
+                  ["python", "Python"],
+                  ["sql", "SQL"],
+                ] as const
+              ).map(([value, label]) => (
+                <label
+                  key={value}
+                  className={`cursor-pointer rounded-full px-2.5 py-0.5 ${
+                    mode === value ? "bg-indigo-100 font-medium text-indigo-700" : "hover:bg-slate-100"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="mode"
+                    value={value}
+                    checked={mode === value}
+                    onChange={() => setMode(value)}
+                    className="sr-only"
+                  />
+                  {label}
+                </label>
+              ))}
+            </fieldset>
             <div className="mx-auto flex max-w-4xl gap-2 px-4 py-3">
               <label htmlFor="question" className="sr-only">
                 Your question

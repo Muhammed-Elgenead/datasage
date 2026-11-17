@@ -32,8 +32,9 @@ def script(
 ) -> None:
     app.state.llm = AnthropicProvider(llm, "test-model", "medium", 16000, "default")
 
-    async def fake_run_code(settings, session_id, code):  # type: ignore[no-untyped-def]
-        return await sandbox(code)
+    async def fake_run_code(settings, session_id, code, sql_tables=None):  # type: ignore[no-untyped-def]
+        sandbox.sql_tables = sql_tables
+        return await sandbox(code, "python" if sql_tables is None else "sql")
 
     monkeypatch.setattr(questions, "run_code", fake_run_code)
 

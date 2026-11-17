@@ -70,7 +70,7 @@ async def test_request_params() -> None:
     assert params["betas"] == [FALLBACK_BETA]
     assert params["fallbacks"] == "default"
     assert "tool_choice" not in params  # forcing a tool is a 400 on this model
-    assert [t["name"] for t in params["tools"]] == ["get_profile", "run_python"]
+    assert [t["name"] for t in params["tools"]] == ["get_profile", "run_python", "run_sql"]
     assert all(
         t["strict"] and t["input_schema"]["additionalProperties"] is False for t in params["tools"]
     )

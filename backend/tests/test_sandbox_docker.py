@@ -204,3 +204,70 @@ def test_symlinked_chart_is_dropped(s: Settings) -> None:
     )
     assert r.status == "ok", r.error
     assert r.charts == ["chart_1.png"]
+
+
+# --- SQL mode: DuckDB in the same container, with the same limits -----------------------
+
+TABLES = {"sales": "/data/sales.csv"}
+
+
+def sql(s: Settings, query: str, tables: dict[str, str] = TABLES) -> SandboxResult:
+    return run_code_sync(s, SESSION, query, tables)
+
+
+def test_sql_returns_a_table(s: Settings) -> None:
+    r = sql(s, "SELECT region, sum(revenue) AS total FROM sales GROUP BY region ORDER BY region")
+    assert r.status == "ok", r.error
+    [table] = r.tables
+    assert table.columns == ["region", "total"]
+    assert table.rows == [["north", 100], ["south", 250]]
+
+
+def test_sql_joins_csv_and_xlsx(s: Settings) -> None:
+    import pandas as pd
+
+    pd.DataFrame({"region": ["north", "south"], "manager": ["Ada", "Lin"]}).to_excel(
+        s.data_dir / str(SESSION) / "people.xlsx", index=False
+    )
+    r = sql(
+        s,
+        "SELECT p.manager, s.revenue FROM sales s JOIN people p USING (region) ORDER BY 2",
+        {**TABLES, "people": "/data/people.xlsx"},
+    )
+    assert r.status == "ok", r.error
+    assert r.tables[0].rows == [["Ada", 100], ["Lin", 250]]
+
+
+def test_sql_error_is_returned_for_the_model(s: Settings) -> None:
+    r = sql(s, "SELECT revnue FROM sales")
+    assert r.status == "error"
+    assert r.error and "revnue" in r.error and "Binder" in r.error
+    assert "run.py" not in r.error
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "SELECT * FROM read_csv('/data/sales.csv')",  # files only through the loaded tables
+        "SELECT * FROM read_text('/etc/passwd')",
+        "SELECT * FROM glob('/**')",
+        "SET enable_external_access = true",  # locked: can't be turned back on
+        "INSTALL httpfs",  # no network, no extensions
+        "ATTACH '/out/x.db' AS x",
+        "COPY sales TO '/out/leak.csv'",
+    ],
+)
+def test_sql_has_no_file_or_network_access(s: Settings, query: str) -> None:
+    r = sql(s, query)
+    assert r.status == "error", r
+    assert not (s.data_dir / str(SESSION) / "runs" / r.run_id / "leak.csv").exists()
+
+
+def test_sql_runaway_query_hits_the_limits(s: Settings) -> None:
+    s = s.model_copy(update={"sandbox_timeout_seconds": 5.0, "sandbox_memory_mb": 256})
+    r = sql(
+        s,
+        "WITH RECURSIVE t(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM t) SELECT count(*) FROM t",
+    )
+    assert r.status in ("timeout", "oom"), r
+    assert leftover_containers(s) == []

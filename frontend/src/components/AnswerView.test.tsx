@@ -36,6 +36,12 @@ test("a failed answer explains why and shows the last error", () => {
   expect(screen.queryByRole("img")).not.toBeInTheDocument();
 });
 
+test("a SQL answer is labelled as SQL", () => {
+  render(<AnswerView sessionId={SID} answer={{ ...answer, language: "sql", code: "SELECT 1", charts: [] }} />);
+  expect(screen.getByText("SQL used")).toBeInTheDocument();
+  expect(screen.getByText("SELECT 1")).toBeInTheDocument();
+});
+
 test("an API failure shows its error without code", () => {
   render(
     <AnswerView
