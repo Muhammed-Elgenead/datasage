@@ -24,6 +24,24 @@ class Settings(BaseSettings):
     max_upload_mb: int = 50
     profile_sample_rows: int = 5
 
+    # Sandbox: the Docker CLI command (local dev: "wsl -d Ubuntu-24.04 -u root -e docker"),
+    # and whether bind-mount paths must be turned into WSL paths (E:\x -> /mnt/e/x).
+    sandbox_docker: str = "docker"
+    sandbox_wsl_paths: bool = False
+    sandbox_image: str = "datasage-sandbox:latest"
+    sandbox_timeout_seconds: float = 30.0
+    sandbox_memory_mb: int = 512
+    sandbox_cpus: float = 1.0
+    sandbox_pids: int = 64
+    sandbox_tmpfs_mb: int = 64
+    sandbox_max_file_mb: int = 64  # RLIMIT_FSIZE: largest file the code may write
+    sandbox_max_output_chars: int = 20_000
+    sandbox_max_table_rows: int = 200
+    sandbox_max_tables: int = 10
+    sandbox_max_charts: int = 5
+    sandbox_max_chart_kb: int = 2048
+    sandbox_max_result_kb: int = 8192
+
 
 @lru_cache
 def get_settings() -> Settings:

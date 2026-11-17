@@ -39,3 +39,21 @@ Newest at the bottom. Format: context → decision → alternatives considered.
 - **Context:** Phase 1 makes no LLM calls.
 - **Decision:** Don't add `anthropic` until Phase 3 needs it.
 - **Alternatives:** Adding it now (an unused dependency).
+
+## 2026-11-17 — Sandbox runs through the Docker CLI (WSL locally)
+
+- **Context:** The backend runs on Windows, but Docker Engine runs inside WSL. Code must run in a throwaway, locked-down container.
+- **Decision:**
+  - The backend shells out to the Docker CLI, as set by `SANDBOX_DOCKER`. Locally that is `wsl -d Ubuntu-24.04 -u root -e docker` (about 0.7 s per call). `SANDBOX_WSL_PATHS=true` turns `E:\…` bind-mount paths into `/mnt/e/…`.
+  - `scripts/sandbox.ps1 build` starts Docker in WSL and builds `datasage-sandbox:latest` with the legacy builder (buildx isn't installed). `scripts/dev.ps1` starts Docker.
+  - **One container per run:** `docker run --detach`, then `docker wait` with the timeout, then `docker rm --force` in a `finally` block, so it also runs after a timeout. Exit code 137 is checked with `docker inspect` to tell an OOM kill apart.
+  - **Limits per run:** `--network none`; uid 10001; `--read-only` with a 64 MB `noexec` tmpfs at `/tmp`; `--cap-drop ALL`; `no-new-privileges`; memory equal to memory-swap (no swap); `--cpus`; `--pids-limit`; `--ulimit fsize`; `--pull never`. Mounts: the session folder read-only at `/data`, and the run's own folder `runs/<run_id>/` read-write at `/out`. Nothing else is mounted.
+  - **`--log-driver none`, and the CLI never attaches**, so code can't flood the backend through stdout. Everything comes back through `/out/result.json`.
+  - **Everything in `/out` is untrusted:** the result size is capped, it's validated with Pydantic, and stdout, tables and charts are capped again. Chart names must match `chart_N.png`, files must start with the PNG magic bytes, and only plain files are read (`lstat`). Symlinks and Windows reparse points are refused, because code can plant links to host paths.
+  - **The runner** (`sandbox-image/run.py`) preloads `pd`, `np` and `plt`, plus `show(df)` and `DATA_DIR`. The last expression's value is returned, as in a notebook. Tracebacks show only the code's own frames, with source lines, so the model can fix its error.
+- **Alternatives:**
+  - Docker API over TCP from Windows: unauthenticated, so any local process would get root in WSL.
+  - The docker-py SDK: it needs that same socket or TCP access.
+  - Passing results over stdout: the code can write to fd 1 directly and flood the backend.
+  - gVisor/Firecracker: stronger isolation, but not available in this WSL setup. We'll reconsider for the Phase 7 host.
+- **Known limit:** `fsize` caps each file but not how many files, so `/out` can grow until the timeout. A size-limited volume is needed before the public deploy (Phase 7).

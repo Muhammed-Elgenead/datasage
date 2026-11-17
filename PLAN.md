@@ -31,7 +31,7 @@ Status: ⬜ not started · 🟨 in progress · ✅ done
 
 ---
 
-## Phase 2 — Sandbox service ⬜
+## Phase 2 — Sandbox service ✅
 
 **Goal:** run untrusted pandas code safely and get back structured results.
 
@@ -41,9 +41,11 @@ Status: ⬜ not started · 🟨 in progress · ✅ done
 - Size caps on stdout, tables, and charts.
 
 **Done when:**
-- [ ] tests show working code returns a table and a chart, and failing code returns the traceback
-- [ ] tests show the limits hold: no network, the timeout kills infinite loops, the memory limit kills memory bombs, other files can't be read, and the code runs as non-root
-- [ ] no sandbox containers are left over after a run, including after a timeout
+- [x] tests show working code returns a table and a chart, and failing code returns the traceback
+- [x] tests show the limits hold: no network, the timeout kills infinite loops, the memory limit kills memory bombs, other files can't be read, and the code runs as non-root. They also cover the read-only filesystem, cgroup CPU/memory/pids limits, no capabilities, capped output, and planted symlinks
+- [x] no sandbox containers are left over after a run, including after a timeout
+
+**Phase 7 carry-over:** the backend image needs a Docker CLI and daemon access to run sandboxes under Compose; a size-limited `/out` volume.
 
 ---
 
@@ -113,6 +115,7 @@ Status: ⬜ not started · 🟨 in progress · ✅ done
 - A host that can start sandbox containers safely (the choice and its tradeoffs recorded in `docs/decisions.md`).
 - CI: ruff, pytest, the frontend build, and a `docker compose up` smoke test (carried over from Phase 1).
 - Request-size cap at the reverse proxy (uploads are size-checked only after the body is received).
+- Sandbox on the deploy host: Docker access for the backend, a size-limited `/out` volume, and stronger isolation if the host offers it (gVisor or similar).
 - Upload limits, rate limits, and automatic cleanup of old sessions' files.
 - A README with an architecture diagram, a demo GIF, and the eval results.
 

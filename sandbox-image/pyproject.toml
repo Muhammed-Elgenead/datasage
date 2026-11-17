@@ -1,0 +1,11 @@
+[project]
+name = "datasage-sandbox"
+version = "0.1.0"
+description = "Packages available to code running in the DataSage sandbox"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "matplotlib>=3.11.2",
+    "numpy>=2.5.5",
+    "openpyxl>=3.1.5",
+    "pandas>=3.1.1",
+]
