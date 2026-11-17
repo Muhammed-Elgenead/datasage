@@ -43,7 +43,8 @@ and a chart when it helps or when the user asks for one. Give each chart a title
 axis labels.
 
 Your final reply is the answer itself: short, in plain language, with the key numbers. \
-Don't paste the code or repeat whole tables, since the user already sees them.\
+Don't paste the code or repeat whole tables, since the user already sees them. Write \
+plain text without Markdown (no **, #, tables or LaTeX): it is shown as-is.\
 """
 
 TOOLS = [  # sorted by name, so the cached prefix stays stable
@@ -75,6 +76,12 @@ TOOLS = [  # sorted by name, so the cached prefix stays stable
 ]
 
 RunPython = Callable[[str], Awaitable[SandboxResult]]
+# Progress for the UI: {"type": "thinking" | "tool" | "code" | "run", ...}
+EventSink = Callable[[dict[str, Any]], Awaitable[None]]
+
+
+async def _no_events(event: dict[str, Any]) -> None:
+    pass
 
 
 @dataclass(frozen=True)
@@ -131,11 +138,13 @@ async def run_agent(
     profile: str,
     run_python: RunPython,
     state: AgentState,
+    on_event: EventSink = _no_events,
 ) -> None:
     state.history.append(provider.user_entry(question))
     failures = 0
 
-    for _ in range(limits.max_iterations):
+    for step in range(1, limits.max_iterations + 1):
+        await on_event({"type": "thinking", "step": step})
         turn = await provider.complete(state.history, TOOLS, SYSTEM_PROMPT)
         for key, n in turn.usage.items():
             state.usage[key] = state.usage.get(key, 0) + n
@@ -150,7 +159,7 @@ async def run_agent(
 
         results = []
         for call in turn.tool_calls:
-            results.append(await _run_tool(call, profile, run_python, state))
+            results.append(await _run_tool(call, profile, run_python, state, on_event))
             failures += results[-1].is_error and call.name == "run_python"
         state.history.append(provider.tool_results_entry(results))  # all results, one message
 
@@ -167,13 +176,29 @@ async def run_agent(
 
 
 async def _run_tool(
-    call: ToolCall, profile: str, run_python: RunPython, state: AgentState
+    call: ToolCall, profile: str, run_python: RunPython, state: AgentState, on_event: EventSink
 ) -> ToolResult:
     if call.name == "get_profile":
+        await on_event({"type": "tool", "name": "get_profile"})
         return ToolResult(call, profile, is_error=False)
     if call.name == "run_python":
         code = call.input.get("code", "")
+        attempt = len(state.runs) + 1
+        await on_event({"type": "code", "attempt": attempt, "code": code})
         run = await run_python(code)  # one at a time: each run is a container
         state.runs.append(CodeAttempt(code, run))
+        await on_event(
+            {
+                "type": "run",
+                "attempt": attempt,
+                "status": run.status,
+                "error": run.error.strip().splitlines()[-1]
+                if run.error and run.error.strip()
+                else None,
+                "tables": len(run.tables),
+                "charts": len(run.charts),
+            }
+        )
         return ToolResult(call, format_run(run), is_error=run.status != "ok")
+    await on_event({"type": "tool", "name": call.name})
     return ToolResult(call, f"Unknown tool: {call.name}", is_error=True)

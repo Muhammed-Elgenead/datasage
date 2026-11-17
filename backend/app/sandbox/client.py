@@ -98,7 +98,7 @@ def build_run_args(settings: Settings, name: str, session_dir: Path, out_dir: Pa
     ]  # fmt: skip
 
 
-def _read_file(out_dir: Path, name: str, max_bytes: int) -> bytes | None:
+def read_plain_file(out_dir: Path, name: str, max_bytes: int) -> bytes | None:
     """The bytes of a plain file directly inside out_dir, or None when it is missing, too
     large, or not a plain file. The code can plant symlinks (seen on Windows as unreadable
     reparse points), so links are never followed."""
@@ -116,7 +116,7 @@ def _read_file(out_dir: Path, name: str, max_bytes: int) -> bytes | None:
 
 def read_output(out_dir: Path, settings: Settings) -> RunnerOutput | str:
     """The validated runner output, or the reason it can't be used."""
-    raw = _read_file(out_dir, "result.json", settings.sandbox_max_result_kb * 1024)
+    raw = read_plain_file(out_dir, "result.json", settings.sandbox_max_result_kb * 1024)
     if raw is None:
         return "the code ended without a usable result (missing, too large, or not a file)"
     try:
@@ -129,7 +129,7 @@ def read_output(out_dir: Path, settings: Settings) -> RunnerOutput | str:
     for name in out.charts[: settings.sandbox_max_charts]:
         if not CHART_NAME.fullmatch(name):
             continue
-        png = _read_file(out_dir, name, settings.sandbox_max_chart_kb * 1024)
+        png = read_plain_file(out_dir, name, settings.sandbox_max_chart_kb * 1024)
         if png is not None and png.startswith(PNG_MAGIC):
             charts.append(name)
     return out.model_copy(

@@ -104,3 +104,19 @@ Newest at the bottom. Format: context → decision → alternatives considered.
   - The system prompt now tells the model to print how many values became null or were dropped after cleaning or parsing, and never to let `errors="coerce"` or `dropna` hide rows. With that change, no rows are lost. One subtler error remains: `format="mixed", dayfirst=True` swaps day and month on some ISO dates.
   - Answer quality on messy data is measured in Phase 6 with known answers, rather than fixed with more prompt rules now.
 - **Alternatives:** keep `gemini-3.6-flash` (more careful, but too slow for an interactive app); add a rule for each data trap to the prompt (overfits to the test file; evals should drive such changes).
+
+## 2026-11-17 — Frontend and live progress (Phase 4)
+
+- **Context:** The UI needs upload, data profiles, a chat with tables, charts and code, live progress while the agent works, and session history.
+- **Decision:**
+  - **`POST /sessions/{id}/ask/stream`** sends Server-Sent Events over POST; the browser reads them with `fetch` and the SSE parser from TaskPilot. Events: `thinking` (one per model call), `tool` (`get_profile`), `code` (each attempt's code), and `run` (status plus the last line of the error), ending with one `answer` (the same shape as `/ask`) or `error` (`status`, `detail`). A comment keep-alive goes out every 15 s.
+  - **The run lives in its own task, not tied to the connection.** If the browser leaves, the question still finishes and is saved. TaskPilot cancels instead, because its runs can wait on approvals.
+  - **History:** `GET /sessions` returns the 50 newest sessions, each with its file names, first question and question count. `GET /sessions/{id}` returns the datasets (with profiles) and every question as an `AnswerOut`. After each answer or error, the UI reloads the session, so it always shows what was saved.
+  - **Charts:** `GET /sessions/{id}/runs/{run_id}/{chart}` checks the run id (32 hex characters) and the chart name, reads only a plain file (no symlinks), and serves it only if it starts with the PNG magic bytes. Anything else gets 404.
+  - **At startup,** questions still `running` are marked `failed` ("Interrupted: the server restarted…"). This assumes a single backend process, as noted in the code.
+  - **Answers are plain text.** The prompt asks for no Markdown and the UI shows answers with `whitespace-pre-wrap`, so there's no Markdown renderer dependency.
+- **Alternatives:**
+  - `EventSource`: it supports GET only, and the question would have to go in the URL.
+  - WebSockets: two-way messaging isn't needed.
+  - Polling the questions table: slower and more code.
+  - `react-markdown`: a dependency we don't need once answers are plain text.

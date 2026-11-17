@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.agents.loop import AgentState, Limits, run_agent
+from app.agents.loop import AgentState, EventSink, Limits, run_agent
 from app.agents.providers import LLMError, LLMNotConfigured, LLMProvider
 from app.core.config import Settings
 from app.db.models import CodeRun, Dataset, Question, Session
@@ -36,6 +36,7 @@ async def ask(
     llm: LLMProvider | LLMNotConfigured,
     session_id: uuid.UUID,
     text: str,
+    on_event: EventSink | None = None,
 ) -> tuple[Question, list[CodeRun]]:
     if await db.get(Session, session_id) is None:
         raise QuestionError(404, "Session not found")
@@ -60,7 +61,8 @@ async def ask(
     failure: QuestionError | None = None
     try:
         limits = Limits(settings.agent_max_iterations, settings.agent_max_code_errors)
-        await run_agent(llm, limits, text, profile_text(datasets), run_python, state)
+        events = {"on_event": on_event} if on_event else {}
+        await run_agent(llm, limits, text, profile_text(datasets), run_python, state, **events)
     except LLMError as exc:
         failure = QuestionError(exc.status_code, exc.message)
     except SandboxUnavailable as exc:

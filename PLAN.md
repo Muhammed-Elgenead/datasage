@@ -67,7 +67,7 @@ Status: ⬜ not started · 🟨 in progress · ✅ done
 
 ---
 
-## Phase 4 — Frontend ⬜
+## Phase 4 — Frontend 🟨
 
 **Goal:** a usable UI for the whole flow.
 
@@ -77,8 +77,8 @@ Status: ⬜ not started · 🟨 in progress · ✅ done
 - Session history.
 
 **Done when:**
-- [ ] the full flow works in the browser: upload, ask, then see the answer with its table, chart, and code
-- [ ] frontend tests (Vitest) cover the main components, and the build has no type errors
+- [ ] the full flow works in the browser: upload, ask, then see the answer with its table, chart, and code (verified through the Vite proxy with real Gemini and the sandbox: upload, a live SSE stream, the stored answer with a correct table, the chart PNG, and history. A visual click-through is still to do)
+- [x] frontend tests (Vitest) cover the main components, and the build has no type errors
 
 ---
 
