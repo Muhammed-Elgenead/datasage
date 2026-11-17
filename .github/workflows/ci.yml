@@ -53,7 +53,15 @@ jobs:
           uv run ruff format --check . ../evals
       - name: Tests
         working-directory: backend
-        run: uv run pytest -q -rs
+        run: |
+          set -o pipefail
+          uv run pytest -q -rs -rfE 2>&1 | tee pytest.log
+      - name: Failing tests as annotations (readable without signing in)
+        if: failure()
+        working-directory: backend
+        run: |
+          grep -E "^(FAILED|ERROR) " pytest.log | head -10 | sed 's/^/::error::/' || true
+          grep -E "^E  " pytest.log | head -10 | sed 's/^/::warning::/' || true
 
   frontend:
     name: Frontend (typecheck, Vitest, build)

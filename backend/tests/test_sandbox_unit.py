@@ -2,6 +2,7 @@
 
 import json
 import os
+import sys
 import uuid
 from pathlib import Path
 from types import SimpleNamespace
@@ -47,6 +48,7 @@ def test_run_args_apply_every_limit(s: Settings, tmp_path: Path) -> None:
     assert args[-1] == s.sandbox_image
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="WSL paths exist only on a Windows host")
 def test_wsl_paths() -> None:
     s = Settings(sandbox_wsl_paths=True)
     assert host_path(Path(r"E:\ai\data\x"), s) == "/mnt/e/ai/data/x"
