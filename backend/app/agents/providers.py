@@ -11,13 +11,21 @@ from dataclasses import dataclass, field
 from typing import Any, Literal, Protocol
 
 import anthropic
-import httpx
 import httpx2
 from google import genai
 from google.genai import errors as genai_errors
 from google.genai import types
 
 from app.core.config import Settings
+
+# google-genai sends requests with httpx2; plain httpx is optional (only installed for dev).
+_TRANSPORT_ERRORS: tuple[type[Exception], ...] = (httpx2.TransportError,)
+try:
+    import httpx
+
+    _TRANSPORT_ERRORS += (httpx.TransportError,)
+except ImportError:
+    pass
 
 StopKind = Literal["end", "tool_use", "pause", "refusal", "max_tokens", "other"]
 
@@ -229,7 +237,7 @@ class GeminiProvider:
             )
         except genai_errors.APIError as exc:
             raise _gemini_error(exc) from exc
-        except (httpx.TransportError, httpx2.TransportError) as exc:
+        except _TRANSPORT_ERRORS as exc:
             raise LLMError(504, "Could not reach the Gemini API") from exc
 
         u = r.usage_metadata
