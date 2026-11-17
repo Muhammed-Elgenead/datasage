@@ -25,6 +25,7 @@ CONTAINER_PREFIX = "datasage-sbx-"
 CHART_NAME = re.compile(r"chart_\d{1,3}\.png")
 PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 OOM_EXIT = 137  # SIGKILL: the OOM killer (or a kill from outside)
+START_TIMEOUT_SECONDS = 90  # creating a container is slow when several start at once
 
 
 class SandboxUnavailable(Exception):
@@ -186,7 +187,14 @@ def run_code_sync(
         return SandboxResult(run_id=run_id, status=status, **fields)  # type: ignore[arg-type]
 
     try:
-        started = _docker(settings, *build_run_args(settings, name, session_dir, out_dir))
+        try:
+            started = _docker(
+                settings,
+                *build_run_args(settings, name, session_dir, out_dir),
+                timeout=START_TIMEOUT_SECONDS,
+            )
+        except subprocess.TimeoutExpired as exc:  # a busy Docker host, not the code's fault
+            raise SandboxUnavailable("Docker took too long to start the sandbox") from exc
         if started.returncode != 0:
             raise SandboxUnavailable(started.stderr.strip()[:500] or "docker run failed")
         try:
@@ -197,8 +205,11 @@ def run_code_sync(
             )
         exit_code = int(waited.stdout.strip() or -1)
         if exit_code == OOM_EXIT:
-            oom = _docker(settings, "inspect", "-f", "{{.State.OOMKilled}}", name)
-            if oom.stdout.strip() == "true":
+            try:
+                oom = _docker(settings, "inspect", "-f", "{{.State.OOMKilled}}", name).stdout
+            except subprocess.TimeoutExpired:
+                oom = ""  # unknown: reported as a crash below
+            if oom.strip() == "true":
                 return done(
                     "oom", error=f"Ran out of memory (limit {settings.sandbox_memory_mb} MB)."
                 )

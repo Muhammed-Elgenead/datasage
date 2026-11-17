@@ -1,0 +1,689 @@
+{
+  "name": "2026-11-17T1550-gemini-3.5-flash-lite",
+  "meta": {
+    "started": "2026-11-17T15:50:46+00:00",
+    "provider": "gemini",
+    "model": "gemini-3.5-flash-lite",
+    "commit": "3cf3a2f",
+    "only": []
+  },
+  "summary": {
+    "cases": 34,
+    "passed": 33,
+    "pass_rate": 0.971,
+    "by_dataset": {
+      "sales": "11/12",
+      "employees": "10/10",
+      "weather": "7/7",
+      "shop": "5/5"
+    },
+    "self_corrected": 0,
+    "failed_runs": 3,
+    "median_latency_s": 29.1,
+    "input_tokens": 184042,
+    "output_tokens": 7787
+  },
+  "results": [
+    {
+      "id": "sales-01",
+      "question": "How many orders are in the file?",
+      "mode": "auto",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "sql"
+      ],
+      "attempts": 1,
+      "failed_runs": 0,
+      "chart_ok": null,
+      "latency_s": 29.5,
+      "input_tokens": 3898,
+      "output_tokens": 46,
+      "answer": "There are 240 orders in the file.",
+      "code": "SELECT count(*) AS total_orders FROM sales"
+    },
+    {
+      "id": "sales-02",
+      "question": "How many units were sold in total?",
+      "mode": "auto",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "sql"
+      ],
+      "attempts": 1,
+      "failed_runs": 0,
+      "chart_ok": null,
+      "latency_s": 31.2,
+      "input_tokens": 3899,
+      "output_tokens": 49,
+      "answer": "A total of 2,464 units were sold.",
+      "code": "SELECT SUM(units) AS total_units FROM sales"
+    },
+    {
+      "id": "sales-03",
+      "question": "What is the total revenue (units times unit price)?",
+      "mode": "auto",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "python"
+      ],
+      "attempts": 1,
+      "failed_runs": 0,
+      "chart_ok": null,
+      "latency_s": 53.6,
+      "input_tokens": 4092,
+      "output_tokens": 186,
+      "answer": "The total revenue (units times unit price) across all orders is 40,017.25 dollars.",
+      "code": "df = pd.read_csv('/data/8ff4c801-05c9-45d3-bbee-871f087c7f2f.csv')\nprint(df['unit_price'].unique())\ndf['price_clean'] = df['unit_price'].str.replace('$', '', regex=False).astype(float)\ntotal_revenue = (df['units'] * df['price_clean']).sum()\nprint(f\"Total revenue: {total_revenue}\")\nshow(pd.DataFrame({'total_revenue': [total_revenue]}))\n"
+    },
+    {
+      "id": "sales-04",
+      "question": "What is the total revenue (units times unit price) for each product?",
+      "mode": "auto",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "python",
+        "python"
+      ],
+      "attempts": 2,
+      "failed_runs": 0,
+      "chart_ok": null,
+      "latency_s": 93.0,
+      "input_tokens": 6262,
+      "output_tokens": 517,
+      "answer": "Here is the total revenue (units times unit price) for each product based on the uploaded sales data:\n\n- Gadget: $23,100.00\n- Widget: $11,037.50\n- Doohickey: $5,879.75",
+      "code": "df = pd.read_csv('/data/75583f54-4839-47f9-b7e3-bb9e6e96c663.csv')\ndf['price_clean'] = df['unit_price'].astype(str).str.replace('$', '', regex=False).astype(float)\ndf['revenue'] = df['units'] * df['price_clean']\nsummary = df.groupby('product')['revenue'].sum().reset_index()\n\nplt.figure(figsize=(8, 5))\nplt.bar(summary['product'], summary['revenue'], color=['#4e79a7', '#f28e2b', '#e15759'])\nplt.title('Total Revenue by Product')\nplt.xlabel('Product')\nplt.ylabel('Total Revenue ($)')\nfor i, row in summary.iterrows():\n    plt.text(i, row['revenue'] + 300, f\"${row['revenue']:,.2f}\", ha='center', va='bottom', fontweight='bold')\nplt.ylim(0, summary['revenue'].max() * 1.15)\nplt.tight_layout()\nplt.show()\n"
+    },
+    {
+      "id": "sales-05",
+      "question": "Which product brought in the most revenue?",
+      "mode": "auto",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "python",
+        "python"
+      ],
+      "attempts": 2,
+      "failed_runs": 0,
+      "chart_ok": null,
+      "latency_s": 55.2,
+      "input_tokens": 6284,
+      "output_tokens": 528,
+      "answer": "The product that brought in the most revenue is the Gadget, with a total revenue of $23,100.00. \n\nHere is the breakdown of total revenue by product:\n1. Gadget: $23,100.00\n2. Widget: $11,037.50\n3. Doohickey: $5,879.75",
+      "code": "df = pd.read_csv('/data/17e66aac-3b68-4c14-95ad-ba927d1982ef.csv')\ndf['price_clean'] = df['unit_price'].astype(str).str.replace('$', '').astype(float)\ndf['revenue'] = df['units'] * df['price_clean']\nrev = df.groupby('product')['revenue'].sum().sort_values(ascending=False)\n\nplt.figure(figsize=(8, 5))\nplt.bar(rev.index, rev.values, color=['#2b5c8f', '#4682b4', '#70a5d8'])\nplt.title('Total Revenue by Product')\nplt.xlabel('Product')\nplt.ylabel('Revenue ($)')\nplt.grid(axis='y', linestyle='--', alpha=0.7)\nfor i, v in enumerate(rev.values):\n    plt.text(i, v + 500, f\"${v:,.2f}\", ha='center', va='bottom', fontweight='bold')\nplt.tight_layout()\nshow(rev)\n"
+    },
+    {
+      "id": "sales-06",
+      "question": "How many orders came from each region?",
+      "mode": "auto",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "sql",
+        "python"
+      ],
+      "attempts": 2,
+      "failed_runs": 0,
+      "chart_ok": null,
+      "latency_s": 64.9,
+      "input_tokens": 5838,
+      "output_tokens": 239,
+      "answer": "Here is the number of orders from each region:\n\n- South: 74 orders\n- West: 65 orders\n- East: 51 orders\n- North: 50 orders",
+      "code": "df = pd.read_csv('/data/89ac4cc5-f55b-4fec-9c36-f21c7f81a8ef.csv')\ncounts = df['region'].value_counts()\nprint(counts)\nplt.figure(figsize=(8, 5))\ncounts.plot(kind='bar', color='skyblue')\nplt.title('Orders by Region')\nplt.xlabel('Region')\nplt.ylabel('Number of Orders')\nplt.xticks(rotation=0)\nplt.tight_layout()\nshow(counts.reset_index())\n"
+    },
+    {
+      "id": "sales-07",
+      "question": "What is the average number of units per order?",
+      "mode": "auto",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "sql"
+      ],
+      "attempts": 1,
+      "failed_runs": 0,
+      "chart_ok": null,
+      "latency_s": 41.0,
+      "input_tokens": 3914,
+      "output_tokens": 70,
+      "answer": "The average number of units per order is 10.27 (specifically, 10.2667 units across 240 orders).",
+      "code": "SELECT AVG(units) AS avg_units FROM sales"
+    },
+    {
+      "id": "sales-08",
+      "question": "What was the total revenue per month? Write each month as YYYY-MM.",
+      "mode": "auto",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "python",
+        "python"
+      ],
+      "attempts": 2,
+      "failed_runs": 0,
+      "chart_ok": null,
+      "latency_s": 56.1,
+      "input_tokens": 6497,
+      "output_tokens": 575,
+      "answer": "The total revenue per month is as follows:\n\n2026-01: $7,530.75\n2026-02: $5,715.50\n2026-03: $8,272.50\n2026-04: $7,893.25\n2026-05: $4,861.50\n2026-06: $5,743.75",
+      "code": "df = pd.read_csv('/data/1acff4db-eb48-4600-8658-3df5e30e4a19.csv')\n\n# Clean unit price\ndf['price'] = df['unit_price'].astype(str).str.replace('$', '', regex=False).astype(float)\ndf['revenue'] = df['units'] * df['price']\n\n# Parse order_date which has mixed formats (YYYY-MM-DD and DD/MM/YYYY)\ndef parse_date(d):\n    # Try ISO first\n    dt = pd.to_datetime(d, format='%Y-%m-%d', errors='coerce')\n    if pd.isna(dt):\n        dt = pd.to_datetime(d, format='%d/%m/%Y', errors='coerce')\n    return dt\n\nparsed_dates = df['order_date'].apply(parse_date)\nprint(\"Null dates:\", parsed_dates.isna().sum())\ndf['date'] = parsed_dates\ndf['month'] = df['date'].dt.strftime('%Y-%m')\n\nmonthly = df.groupby('month')['revenue'].sum().reset_index()\nshow(monthly)\n\nplt.figure(figsize=(8, 5))\nplt.bar(monthly['month'], monthly['revenue'], color='skyblue')\nplt.title('Total Revenue per Month')\nplt.xlabel('Month (YYYY-MM)')\nplt.ylabel('Revenue')\nplt.grid(axis='y', linestyle='--', alpha=0.7)\nplt.tight_layout()\n"
+    },
+    {
+      "id": "sales-09",
+      "question": "Which month had the highest revenue? Write it as YYYY-MM.",
+      "mode": "auto",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "python",
+        "python",
+        "python"
+      ],
+      "attempts": 3,
+      "failed_runs": 0,
+      "chart_ok": null,
+      "latency_s": 96.0,
+      "input_tokens": 9789,
+      "output_tokens": 754,
+      "answer": "The month with the highest revenue was 2026-03 with a total revenue of $8,272.50.",
+      "code": "import pandas as pd\nimport matplotlib.pyplot as plt\n\ndf = pd.read_csv('/data/e5b0760e-0738-4c97-9a75-1aca3cbb4d4c.csv')\ndf['price'] = df['unit_price'].str.replace('$', '', regex=False).astype(float)\n\ndef parse_date(x):\n    if '-' in x:\n        return pd.to_datetime(x, format='%Y-%m-%d')\n    else:\n        return pd.to_datetime(x, format='%d/%m/%Y')\n\ndf['parsed_date'] = df['order_date'].apply(parse_date)\ndf['year_month'] = df['parsed_date'].dt.strftime('%Y-%m')\ndf['revenue'] = df['units'] * df['price']\n\nmonthly = df.groupby('year_month')['revenue'].sum().reset_index()\n\nplt.figure(figsize=(8, 5))\nplt.bar(monthly['year_month'], monthly['revenue'], color='skyblue')\nplt.title('Monthly Revenue')\nplt.xlabel('Month')\nplt.ylabel('Revenue ($)')\nplt.grid(axis='y', linestyle='--', alpha=0.7)\nplt.tight_layout()\n"
+    },
+    {
+      "id": "sales-10",
+      "question": "What was the West region's revenue in March 2026?",
+      "mode": "auto",
+      "passed": false,
+      "reason": "2972 not found",
+      "status": "code_failed",
+      "languages": [
+        "python",
+        "python",
+        "python",
+        "python",
+        "python",
+        "python"
+      ],
+      "attempts": 6,
+      "failed_runs": 3,
+      "chart_ok": null,
+      "latency_s": 87.0,
+      "input_tokens": 17657,
+      "output_tokens": 1034,
+      "answer": "I couldn't get working code after 3 failed attempts. The last error is shown with the code.",
+      "code": "import pandas as pd\ndf = pd.read_csv('/data/a928b583-9fd4-403d-8581-9627d56d1e30.csv')\ndf['date'] = pd.to_datetime(df['order_date'], dayfirst=True, errors='coerce')\nprint(\"Null dates:\", df['date'].isna().sum())\ndf['price'] = df['unit_price'].str.replace('$', '', regex=False).astype(float)\ndf['revenue'] = df['units'] * df['price']\n\n# Let's check all rows in March 2026 for West region specifically\nwest_march = df[(df['region'] == 'West') & (df['date'].dt.year == 2026) & (df['date'].dt.month == 3)]\nshow(west_march)\nprint(\"Sum revenue:\", west_march['revenue'].sum())\n"
+    },
+    {
+      "id": "sales-11",
+      "question": "Show a bar chart of total units sold per region.",
+      "mode": "auto",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "python"
+      ],
+      "attempts": 1,
+      "failed_runs": 0,
+      "chart_ok": true,
+      "latency_s": 22.6,
+      "input_tokens": 4137,
+      "output_tokens": 237,
+      "answer": "Here is the total units sold per region:\n\nSouth: 771 units\nWest: 711 units\nEast: 519 units\nNorth: 463 units\n\nA bar chart illustrating these totals across each region has been generated and displayed.",
+      "code": "df = pd.read_csv('/data/a9e128f6-deaa-4784-877e-3fa652594f44.csv')\nresult = df.groupby('region')['units'].sum().reset_index()\nprint(result)\n\nplt.figure(figsize=(8, 5))\nplt.bar(result['region'], result['units'], color='skyblue')\nplt.title('Total Units Sold per Region')\nplt.xlabel('Region')\nplt.ylabel('Total Units Sold')\nplt.grid(axis='y', linestyle='--', alpha=0.7)\nplt.tight_layout()\nshow(result)\n"
+    },
+    {
+      "id": "sales-12",
+      "question": "How many orders were placed for each product?",
+      "mode": "sql",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "sql"
+      ],
+      "attempts": 1,
+      "failed_runs": 0,
+      "chart_ok": null,
+      "latency_s": 26.3,
+      "input_tokens": 3738,
+      "output_tokens": 89,
+      "answer": "Here is the number of orders placed for each product based on the sales data:\n\n- Widget: 88 orders\n- Gadget: 76 orders\n- Doohickey: 76 orders",
+      "code": "SELECT product, COUNT(*) AS order_count FROM sales GROUP BY product ORDER BY order_count DESC;"
+    },
+    {
+      "id": "employees-01",
+      "question": "How many employees are there?",
+      "mode": "auto",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "sql"
+      ],
+      "attempts": 1,
+      "failed_runs": 0,
+      "chart_ok": null,
+      "latency_s": 13.1,
+      "input_tokens": 4613,
+      "output_tokens": 43,
+      "answer": "There are 60 employees in total.",
+      "code": "SELECT count(*) as total_employees FROM employees"
+    },
+    {
+      "id": "employees-02",
+      "question": "What is the average salary in each department?",
+      "mode": "auto",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "sql",
+        "python"
+      ],
+      "attempts": 2,
+      "failed_runs": 0,
+      "chart_ok": null,
+      "latency_s": 59.6,
+      "input_tokens": 7023,
+      "output_tokens": 326,
+      "answer": "Here is the average salary for each department based on the employee records:\n\n- Engineering: $87,666.67\n- Finance: $67,575.00\n- Sales: $64,612.50\n- Support: $45,177.78",
+      "code": "df = pd.read_excel('/data/9a421e06-f205-4068-8e47-9e037fb45e10.xlsx')\navg_sal = df.groupby('department')['salary'].mean().round(2).reset_index()\n\nplt.figure(figsize=(8, 5))\nplt.bar(avg_sal['department'], avg_sal['salary'], color='skyblue')\nplt.title('Average Salary by Department')\nplt.xlabel('Department')\nplt.ylabel('Average Salary')\nfor i, row in avg_sal.iterrows():\n    plt.text(i, row['salary'] + 1000, f\"${row['salary']:,.2f}\", ha='center')\nplt.tight_layout()\nshow(avg_sal)\n"
+    },
+    {
+      "id": "employees-03",
+      "question": "Which department has the most employees?",
+      "mode": "auto",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "sql"
+      ],
+      "attempts": 1,
+      "failed_runs": 0,
+      "chart_ok": null,
+      "latency_s": 16.4,
+      "input_tokens": 4650,
+      "output_tokens": 64,
+      "answer": "The department with the most employees is Engineering, with a total of 27 employees.",
+      "code": "select department, count(*) as employee_count from employees group by department order by employee_count desc;"
+    },
+    {
+      "id": "employees-04",
+      "question": "What is the median salary across all employees?",
+      "mode": "auto",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "sql"
+      ],
+      "attempts": 1,
+      "failed_runs": 0,
+      "chart_ok": null,
+      "latency_s": 24.3,
+      "input_tokens": 4629,
+      "output_tokens": 54,
+      "answer": "The median salary across all employees is $74,200.00.",
+      "code": "SELECT median(salary) AS median_salary FROM employees"
+    },
+    {
+      "id": "employees-05",
+      "question": "How many employees were hired in 2023?",
+      "mode": "auto",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "sql"
+      ],
+      "attempts": 1,
+      "failed_runs": 0,
+      "chart_ok": null,
+      "latency_s": 24.3,
+      "input_tokens": 4650,
+      "output_tokens": 68,
+      "answer": "A total of 8 employees were hired in 2023.",
+      "code": "SELECT COUNT(*) as count_2023 FROM employees WHERE EXTRACT(YEAR FROM hire_date) = 2023"
+    },
+    {
+      "id": "employees-06",
+      "question": "What percentage of employees work remotely?",
+      "mode": "auto",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "sql"
+      ],
+      "attempts": 1,
+      "failed_runs": 0,
+      "chart_ok": null,
+      "latency_s": 27.5,
+      "input_tokens": 4667,
+      "output_tokens": 94,
+      "answer": "35.0% of employees work remotely (21 out of 60 employees), while 65.0% (39 employees) do not work remotely.",
+      "code": "SELECT remote, COUNT(*) as count, (COUNT(*) * 100.0 / (SELECT COUNT(*) FROM employees)) as percentage FROM employees GROUP BY remote"
+    },
+    {
+      "id": "employees-07",
+      "question": "Who is the highest-paid employee?",
+      "mode": "auto",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "sql"
+      ],
+      "attempts": 1,
+      "failed_runs": 0,
+      "chart_ok": null,
+      "latency_s": 28.6,
+      "input_tokens": 4638,
+      "output_tokens": 67,
+      "answer": "The highest-paid employee is Grace Hopper from the Engineering department, with a salary of 108,100.",
+      "code": "SELECT name, department, salary FROM employees ORDER BY salary DESC LIMIT 1;"
+    },
+    {
+      "id": "employees-08",
+      "question": "What is the average rating of employees hired before 2020?",
+      "mode": "auto",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "sql"
+      ],
+      "attempts": 1,
+      "failed_runs": 0,
+      "chart_ok": null,
+      "latency_s": 25.6,
+      "input_tokens": 4673,
+      "output_tokens": 84,
+      "answer": "The average rating of employees hired before 2020 is 3.0 (based on 27 employees).",
+      "code": "SELECT AVG(rating) AS avg_rating, COUNT(*) as employee_count FROM employees WHERE EXTRACT(YEAR FROM hire_date) < 2020"
+    },
+    {
+      "id": "employees-09",
+      "question": "Chart the number of hires per year.",
+      "mode": "auto",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "python"
+      ],
+      "attempts": 1,
+      "failed_runs": 0,
+      "chart_ok": true,
+      "latency_s": 19.2,
+      "input_tokens": 4896,
+      "output_tokens": 355,
+      "answer": "Here is the breakdown of hires per year, along with the generated chart showing the hiring trend from 2016 through 2024:\n\n- 2016: 8 hires\n- 2017: 7 hires\n- 2018: 6 hires\n- 2019: 6 hires\n- 2020: 4 hires\n- 2021: 8 hires\n- 2022: 7 hires\n- 2023: 8 hires\n- 2024: 6 hires",
+      "code": "df = pd.read_excel('/data/f6c11bde-a285-4398-9cb6-efc352a814c3.xlsx')\ndf['year'] = pd.to_datetime(df['hire_date']).dt.year\ncounts = df['year'].value_counts().sort_index()\n\nplt.figure(figsize=(8, 5))\ncounts.plot(kind='bar', color='steelblue', edgecolor='black')\nplt.title('Number of Hires per Year')\nplt.xlabel('Year')\nplt.ylabel('Number of Hires')\nplt.xticks(rotation=0)\nplt.grid(axis='y', linestyle='--', alpha=0.7)\nplt.tight_layout()\n\nshow(counts.reset_index().rename(columns={'index': 'year', 'year': 'hires'}))\n"
+    },
+    {
+      "id": "employees-10",
+      "question": "What is the total salary cost of each department?",
+      "mode": "sql",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "sql"
+      ],
+      "attempts": 1,
+      "failed_runs": 0,
+      "chart_ok": null,
+      "latency_s": 23.9,
+      "input_tokens": 4510,
+      "output_tokens": 122,
+      "answer": "The total salary cost for each department is as follows:\n\nEngineering: $2,367,000.00\nSales: $1,033,800.00\nFinance: $540,600.00\nSupport: $406,600.00",
+      "code": "SELECT department, SUM(salary) AS total_salary_cost FROM employees GROUP BY department ORDER BY total_salary_cost DESC"
+    },
+    {
+      "id": "weather-01",
+      "question": "What is the average temperature in each city?",
+      "mode": "auto",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "sql",
+        "python"
+      ],
+      "attempts": 2,
+      "failed_runs": 0,
+      "chart_ok": null,
+      "latency_s": 40.3,
+      "input_tokens": 5870,
+      "output_tokens": 283,
+      "answer": "The average temperatures for each city are as follows:\n\n- Madrid: 16.30\u00b0C\n- Bergen: 9.27\u00b0C\n- Oslo: 5.77\u00b0C",
+      "code": "df = pd.read_csv('/data/f683d8c9-61d4-407e-9361-2fe098d4eb2f.csv')\navg_temp = df.groupby('city')['temp_c'].mean().reset_index()\nplt.figure(figsize=(8, 5))\nplt.bar(avg_temp['city'], avg_temp['temp_c'], color=['crimson', 'royalblue', 'forestgreen'])\nplt.title('Average Temperature by City')\nplt.xlabel('City')\nplt.ylabel('Average Temperature (\u00b0C)')\nplt.grid(axis='y', linestyle='--', alpha=0.7)\nplt.tight_layout()\nshow(avg_temp)\n"
+    },
+    {
+      "id": "weather-02",
+      "question": "Which city had the most total rainfall?",
+      "mode": "auto",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "sql",
+        "python"
+      ],
+      "attempts": 2,
+      "failed_runs": 0,
+      "chart_ok": null,
+      "latency_s": 35.3,
+      "input_tokens": 5785,
+      "output_tokens": 268,
+      "answer": "Bergen had the most total rainfall, with a total of 938.5 mm across the recorded period. Oslo followed with 240.8 mm, and Madrid had the least with 172.5 mm.",
+      "code": "df = pd.read_csv('/data/e845f22e-1697-470e-827f-a1c95980f6b1.csv')\ntot = df.groupby('city')['rainfall_mm'].sum().sort_values(ascending=False)\nplt.figure(figsize=(8, 5))\ntot.plot(kind='bar', color='skyblue')\nplt.title('Total Rainfall by City')\nplt.xlabel('City')\nplt.ylabel('Total Rainfall (mm)')\nplt.xticks(rotation=0)\nplt.tight_layout()\nshow(tot.reset_index())\n"
+    },
+    {
+      "id": "weather-03",
+      "question": "How many temperature readings are missing?",
+      "mode": "auto",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "sql"
+      ],
+      "attempts": 1,
+      "failed_runs": 0,
+      "chart_ok": null,
+      "latency_s": 21.0,
+      "input_tokens": 3854,
+      "output_tokens": 55,
+      "answer": "There are 18 missing temperature readings in the dataset.",
+      "code": "SELECT COUNT(*) AS missing_temperature_readings FROM weather WHERE temp_c IS NULL"
+    },
+    {
+      "id": "weather-04",
+      "question": "On which date was the highest temperature recorded? Write it as YYYY-MM-DD.",
+      "mode": "auto",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "sql"
+      ],
+      "attempts": 1,
+      "failed_runs": 0,
+      "chart_ok": null,
+      "latency_s": 31.0,
+      "input_tokens": 3999,
+      "output_tokens": 71,
+      "answer": "The highest temperature recorded was 25.3\u00b0C in Madrid on 2026-02-20.",
+      "code": "SELECT date, city, temp_c FROM weather ORDER BY temp_c DESC LIMIT 5"
+    },
+    {
+      "id": "weather-05",
+      "question": "On how many days did Bergen get more than 10 mm of rain?",
+      "mode": "auto",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "sql"
+      ],
+      "attempts": 1,
+      "failed_runs": 0,
+      "chart_ok": null,
+      "latency_s": 29.1,
+      "input_tokens": 3899,
+      "output_tokens": 71,
+      "answer": "Bergen got more than 10 mm of rain on 33 days.",
+      "code": "SELECT count(*) AS days_over_10mm FROM weather WHERE city = 'Bergen' AND rainfall_mm > 10;"
+    },
+    {
+      "id": "weather-06",
+      "question": "Plot the monthly average temperature for each city as a line chart.",
+      "mode": "auto",
+      "passed": true,
+      "reason": "no value to check",
+      "status": "ok",
+      "languages": [
+        "python"
+      ],
+      "attempts": 1,
+      "failed_runs": 0,
+      "chart_ok": true,
+      "latency_s": 31.9,
+      "input_tokens": 4629,
+      "output_tokens": 295,
+      "answer": "The line chart shows the monthly average temperature for each city (Bergen, Madrid, and Oslo) across the recorded months. Madrid consistently experiences the highest temperatures, followed by Bergen, while Oslo records the lowest average temperatures throughout the period.",
+      "code": "df = pd.read_csv('/data/626f2ae8-5d9a-45ff-bb2e-99c7145643d0.csv')\nprint(df.info())\ndf['date'] = pd.to_datetime(df['date'])\ndf['month'] = df['date'].dt.to_period('M')\nmonthly = df.groupby(['month', 'city'])['temp_c'].mean().unstack()\nprint(monthly)\n\nplt.figure(figsize=(10, 6))\nfor city in monthly.columns:\n    plt.plot(monthly.index.astype(str), monthly[city], marker='o', label=city)\n\nplt.title('Monthly Average Temperature by City')\nplt.xlabel('Month')\nplt.ylabel('Temperature (\u00b0C)')\nplt.xticks(rotation=45)\nplt.legend()\nplt.grid(True)\nplt.tight_layout()\nshow(monthly)\n"
+    },
+    {
+      "id": "weather-07",
+      "question": "What is the correlation between temperature and rainfall across all readings?",
+      "mode": "auto",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "python"
+      ],
+      "attempts": 1,
+      "failed_runs": 0,
+      "chart_ok": null,
+      "latency_s": 28.7,
+      "input_tokens": 4126,
+      "output_tokens": 276,
+      "answer": "The correlation between temperature and rainfall across all 342 valid readings (with 18 missing temperature values) is approximately -0.10 (specifically -0.100), indicating a very weak negative relationship between temperature and rainfall.",
+      "code": "df = pd.read_csv('/data/4b663e1b-58ae-4d0e-a8b1-afe8edbc2971.csv')\nprint('Row count:', len(df))\ncorr = df['temp_c'].corr(df['rainfall_mm'])\nprint('Correlation:', corr)\n\nplt.figure(figsize=(8, 5))\nplt.scatter(df['temp_c'], df['rainfall_mm'], alpha=0.6)\nplt.title('Temperature vs Rainfall')\nplt.xlabel('Temperature (C)')\nplt.ylabel('Rainfall (mm)')\nplt.grid(True)\nplt.show()\n\n# return correlation as a series/df for show\nshow(pd.Series({'correlation': corr, 'valid_pairs_count': df[['temp_c', 'rainfall_mm']].dropna().shape[0]}))\n"
+    },
+    {
+      "id": "shop-01",
+      "question": "What is the total order amount per customer country?",
+      "mode": "auto",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "sql",
+        "python"
+      ],
+      "attempts": 2,
+      "failed_runs": 0,
+      "chart_ok": null,
+      "latency_s": 47.6,
+      "input_tokens": 7443,
+      "output_tokens": 401,
+      "answer": "Here is the total order amount per customer country:\n\n- Spain: 3,551.56\n- Canada: 3,324.61\n- Norway: 3,193.32\n- Japan: 2,849.76",
+      "code": "import pandas as pd\ncustomers = pd.read_csv('/data/0573b5e7-1791-4455-85ca-c5bd9d84fe97.csv')\norders = pd.read_csv('/data/bf8f0a91-5e2d-4a05-8374-934ec04c6e63.csv')\ndf = orders.merge(customers, on='customer_id')\nres = df.groupby('country')['amount'].sum().reset_index().sort_values(by='amount', ascending=False)\nplt.figure(figsize=(8, 5))\nplt.bar(res['country'], res['amount'], color='skyblue')\nplt.title('Total Order Amount per Customer Country')\nplt.xlabel('Country')\nplt.ylabel('Total Order Amount')\nfor i, v in enumerate(res['amount']):\n    plt.text(i, v + 50, f\"{v:.2f}\", ha='center')\nplt.tight_layout()\nshow(res)"
+    },
+    {
+      "id": "shop-02",
+      "question": "Which customer has spent the most in total?",
+      "mode": "auto",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "sql"
+      ],
+      "attempts": 1,
+      "failed_runs": 0,
+      "chart_ok": null,
+      "latency_s": 19.5,
+      "input_tokens": 5019,
+      "output_tokens": 127,
+      "answer": "Customer 28 has spent the most in total, with a total spend of $807.78 across their orders.",
+      "code": "SELECT c.customer_id, c.name, c.country, c.segment, SUM(o.amount) AS total_spent FROM customers c JOIN orders o ON c.customer_id = o.customer_id GROUP BY c.customer_id, c.name, c.country, c.segment ORDER BY total_spent DESC LIMIT 5"
+    },
+    {
+      "id": "shop-03",
+      "question": "How many customers have never placed an order?",
+      "mode": "auto",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "sql"
+      ],
+      "attempts": 1,
+      "failed_runs": 0,
+      "chart_ok": null,
+      "latency_s": 17.1,
+      "input_tokens": 4829,
+      "output_tokens": 70,
+      "answer": "There are 5 customers who have never placed an order out of the 40 total customers.",
+      "code": "SELECT count(*) AS customers_never_ordered FROM customers WHERE customer_id NOT IN (SELECT customer_id FROM orders)"
+    },
+    {
+      "id": "shop-04",
+      "question": "How many orders were placed by each customer segment?",
+      "mode": "sql",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "sql"
+      ],
+      "attempts": 1,
+      "failed_runs": 0,
+      "chart_ok": null,
+      "latency_s": 25.2,
+      "input_tokens": 4681,
+      "output_tokens": 108,
+      "answer": "Based on the orders and customer data, here is the number of orders placed by each customer segment:\n\n- Basic: 106 orders\n- Premium: 44 orders",
+      "code": "SELECT c.segment, COUNT(o.order_id) AS order_count FROM customers c JOIN orders o ON c.customer_id = o.customer_id GROUP BY c.segment ORDER BY order_count DESC"
+    },
+    {
+      "id": "shop-05",
+      "question": "What is the average order amount for Premium customers?",
+      "mode": "auto",
+      "passed": true,
+      "reason": "",
+      "status": "ok",
+      "languages": [
+        "sql"
+      ],
+      "attempts": 1,
+      "failed_runs": 0,
+      "chart_ok": null,
+      "latency_s": 15.4,
+      "input_tokens": 4954,
+      "output_tokens": 161,
+      "answer": "The average order amount for Premium customers is $86.92 (across 44 orders totaling $3,824.48). For comparison, Basic customers have an average order amount of $85.80.",
+      "code": "SELECT \n    c.segment,\n    COUNT(o.order_id) AS order_count,\n    ROUND(AVG(o.amount), 2) AS avg_order_amount,\n    ROUND(SUM(o.amount), 2) AS total_amount\nFROM customers c\nJOIN orders o ON c.customer_id = o.customer_id\nGROUP BY c.segment"
+    }
+  ]
+}

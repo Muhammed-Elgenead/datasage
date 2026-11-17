@@ -136,3 +136,35 @@ Newest at the bottom. Format: context → decision → alternatives considered.
   - DuckDB reading the files directly (`read_csv_auto`): it would need file access in SQL, the XLSX extension needs network to install, and the types could differ from the profile.
   - SQLite: weaker analytics SQL and no DataFrame registration.
   - A single "language" argument on one tool: two tools give the model clearer descriptions and let a forced mode simply remove one.
+
+## 2026-11-17 — Evals (Phase 6)
+
+- **Context:** Phase 3 showed that `ok` doesn't mean correct (silently dropped rows, swapped day and month). We need answers checked against known results, and regressions made visible.
+- **Decision:**
+  - **`evals/make_datasets.py`** generates 4 datasets with fixed seeds, plus `evals/cases.json` (34 cases). The correct answers are computed there with careful pandas, never by the agent. The datasets:
+    - `sales`: text prices and mixed date formats, including the Phase 3 trap
+    - `employees`: a clean XLSX file
+    - `weather`: missing values
+    - `shop`: two CSVs to join, with customers who never ordered
+  - Four cases force SQL mode, and four ask for a chart.
+  - **`python -m evals.run`** (one command, run in the backend's uv environment) calls `run_agent` directly with the real provider and real sandbox. Each case gets a fresh session folder whose files are stored under ids, as uploads are. Using no API and no Postgres keeps the evals about the agent. Cases run 3 at a time.
+  - **Scoring is deterministic** (`evals/scoring.py`, unit-tested):
+    - expected numbers must appear in the answer text or a result-table cell, within an absolute or relative tolerance
+    - expected rows must appear in the same table row as their key (or on one line of text)
+    - text must appear in the answer
+    - a chart must exist when one was asked for
+    - the run's status must be `ok`
+  - **Each report** records per case: pass/fail and why, status, runs and failed runs (self-corrections), languages used, latency, tokens, the answer and the code.
+  - **Reports** go to `docs/evals/<UTC time>-<model>.{json,md}`. The Markdown compares with the previous JSON report: the pass-rate change, regressions (passed before, fail now) and fixes, listed by case.
+- **Alternatives:**
+  - An LLM judge: it handles free-form answers, but costs more, isn't deterministic, and needs evals of its own. "Appears somewhere" can pass by coincidence; that limit is noted in the code.
+  - Evals through the HTTP API: slower, and they would test the API and database too.
+  - Hand-written answers: error-prone; generating them alongside the data keeps them in sync.
+- **Follow-up (same day): API outages aren't agent failures.** A second back-to-back full run hit Gemini's rate limit, and 17 cases "regressed". The runner now:
+  - reports the API or sandbox error as the case's reason
+  - counts those cases as `errored`
+  - keeps them out of regressions and fixes, listing them as "not comparable"
+  - retries a rate-limited case once after 60 s
+  - runs 2 cases at a time (down from 3)
+
+  That polluted report was deleted instead of committed, because it measured the outage, not the agent. The same run also exposed a backend bug: a slow `docker run` raised an uncaught `TimeoutExpired`, which would have been a 500 in the app. Starting the sandbox now gets 90 s, and a slow start becomes `SandboxUnavailable` (503).

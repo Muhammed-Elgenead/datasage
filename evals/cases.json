@@ -1,0 +1,557 @@
+[
+  {
+    "id": "sales-01",
+    "files": [
+      "sales.csv"
+    ],
+    "question": "How many orders are in the file?",
+    "expected": {
+      "type": "number",
+      "value": 240.0,
+      "abs_tol": 0.01,
+      "rel_tol": 0.001
+    },
+    "chart": false,
+    "mode": "auto"
+  },
+  {
+    "id": "sales-02",
+    "files": [
+      "sales.csv"
+    ],
+    "question": "How many units were sold in total?",
+    "expected": {
+      "type": "number",
+      "value": 2464.0,
+      "abs_tol": 0.01,
+      "rel_tol": 0.001
+    },
+    "chart": false,
+    "mode": "auto"
+  },
+  {
+    "id": "sales-03",
+    "files": [
+      "sales.csv"
+    ],
+    "question": "What is the total revenue (units times unit price)?",
+    "expected": {
+      "type": "number",
+      "value": 40017.25,
+      "abs_tol": 0.01,
+      "rel_tol": 0.001
+    },
+    "chart": false,
+    "mode": "auto"
+  },
+  {
+    "id": "sales-04",
+    "files": [
+      "sales.csv"
+    ],
+    "question": "What is the total revenue (units times unit price) for each product?",
+    "expected": {
+      "type": "rows",
+      "rows": {
+        "Doohickey": 5879.75,
+        "Gadget": 23100.0,
+        "Widget": 11037.5
+      },
+      "abs_tol": 0.01,
+      "rel_tol": 0.001
+    },
+    "chart": false,
+    "mode": "auto"
+  },
+  {
+    "id": "sales-05",
+    "files": [
+      "sales.csv"
+    ],
+    "question": "Which product brought in the most revenue?",
+    "expected": {
+      "type": "text",
+      "value": "Gadget"
+    },
+    "chart": false,
+    "mode": "auto"
+  },
+  {
+    "id": "sales-06",
+    "files": [
+      "sales.csv"
+    ],
+    "question": "How many orders came from each region?",
+    "expected": {
+      "type": "rows",
+      "rows": {
+        "South": 74.0,
+        "West": 65.0,
+        "East": 51.0,
+        "North": 50.0
+      },
+      "abs_tol": 0.01,
+      "rel_tol": 0.001
+    },
+    "chart": false,
+    "mode": "auto"
+  },
+  {
+    "id": "sales-07",
+    "files": [
+      "sales.csv"
+    ],
+    "question": "What is the average number of units per order?",
+    "expected": {
+      "type": "number",
+      "value": 10.2667,
+      "abs_tol": 0.01,
+      "rel_tol": 0.005
+    },
+    "chart": false,
+    "mode": "auto"
+  },
+  {
+    "id": "sales-08",
+    "files": [
+      "sales.csv"
+    ],
+    "question": "What was the total revenue per month? Write each month as YYYY-MM.",
+    "expected": {
+      "type": "rows",
+      "rows": {
+        "2026-01": 7530.75,
+        "2026-02": 5715.5,
+        "2026-03": 8272.5,
+        "2026-04": 7893.25,
+        "2026-05": 4861.5,
+        "2026-06": 5743.75
+      },
+      "abs_tol": 0.01,
+      "rel_tol": 0.001
+    },
+    "chart": false,
+    "mode": "auto"
+  },
+  {
+    "id": "sales-09",
+    "files": [
+      "sales.csv"
+    ],
+    "question": "Which month had the highest revenue? Write it as YYYY-MM.",
+    "expected": {
+      "type": "text",
+      "value": "2026-03"
+    },
+    "chart": false,
+    "mode": "auto"
+  },
+  {
+    "id": "sales-10",
+    "files": [
+      "sales.csv"
+    ],
+    "question": "What was the West region's revenue in March 2026?",
+    "expected": {
+      "type": "number",
+      "value": 2972.0,
+      "abs_tol": 0.01,
+      "rel_tol": 0.001
+    },
+    "chart": false,
+    "mode": "auto"
+  },
+  {
+    "id": "sales-11",
+    "files": [
+      "sales.csv"
+    ],
+    "question": "Show a bar chart of total units sold per region.",
+    "expected": {
+      "type": "rows",
+      "rows": {
+        "East": 519.0,
+        "North": 463.0,
+        "South": 771.0,
+        "West": 711.0
+      },
+      "abs_tol": 0.01,
+      "rel_tol": 0.001
+    },
+    "chart": true,
+    "mode": "auto"
+  },
+  {
+    "id": "sales-12",
+    "files": [
+      "sales.csv"
+    ],
+    "question": "How many orders were placed for each product?",
+    "expected": {
+      "type": "rows",
+      "rows": {
+        "Widget": 88.0,
+        "Gadget": 76.0,
+        "Doohickey": 76.0
+      },
+      "abs_tol": 0.01,
+      "rel_tol": 0.001
+    },
+    "chart": false,
+    "mode": "sql"
+  },
+  {
+    "id": "employees-01",
+    "files": [
+      "employees.xlsx"
+    ],
+    "question": "How many employees are there?",
+    "expected": {
+      "type": "number",
+      "value": 60.0,
+      "abs_tol": 0.01,
+      "rel_tol": 0.001
+    },
+    "chart": false,
+    "mode": "auto"
+  },
+  {
+    "id": "employees-02",
+    "files": [
+      "employees.xlsx"
+    ],
+    "question": "What is the average salary in each department?",
+    "expected": {
+      "type": "rows",
+      "rows": {
+        "Engineering": 87666.6667,
+        "Finance": 67575.0,
+        "Sales": 64612.5,
+        "Support": 45177.7778
+      },
+      "abs_tol": 1,
+      "rel_tol": 0.001
+    },
+    "chart": false,
+    "mode": "auto"
+  },
+  {
+    "id": "employees-03",
+    "files": [
+      "employees.xlsx"
+    ],
+    "question": "Which department has the most employees?",
+    "expected": {
+      "type": "text",
+      "value": "Engineering"
+    },
+    "chart": false,
+    "mode": "auto"
+  },
+  {
+    "id": "employees-04",
+    "files": [
+      "employees.xlsx"
+    ],
+    "question": "What is the median salary across all employees?",
+    "expected": {
+      "type": "number",
+      "value": 74200.0,
+      "abs_tol": 0.01,
+      "rel_tol": 0.001
+    },
+    "chart": false,
+    "mode": "auto"
+  },
+  {
+    "id": "employees-05",
+    "files": [
+      "employees.xlsx"
+    ],
+    "question": "How many employees were hired in 2023?",
+    "expected": {
+      "type": "number",
+      "value": 8.0,
+      "abs_tol": 0.01,
+      "rel_tol": 0.001
+    },
+    "chart": false,
+    "mode": "auto"
+  },
+  {
+    "id": "employees-06",
+    "files": [
+      "employees.xlsx"
+    ],
+    "question": "What percentage of employees work remotely?",
+    "expected": {
+      "type": "number",
+      "value": 35.0,
+      "abs_tol": 0.1,
+      "rel_tol": 0.001
+    },
+    "chart": false,
+    "mode": "auto"
+  },
+  {
+    "id": "employees-07",
+    "files": [
+      "employees.xlsx"
+    ],
+    "question": "Who is the highest-paid employee?",
+    "expected": {
+      "type": "text",
+      "value": "Grace Hopper"
+    },
+    "chart": false,
+    "mode": "auto"
+  },
+  {
+    "id": "employees-08",
+    "files": [
+      "employees.xlsx"
+    ],
+    "question": "What is the average rating of employees hired before 2020?",
+    "expected": {
+      "type": "number",
+      "value": 3.0,
+      "abs_tol": 0.01,
+      "rel_tol": 0.005
+    },
+    "chart": false,
+    "mode": "auto"
+  },
+  {
+    "id": "employees-09",
+    "files": [
+      "employees.xlsx"
+    ],
+    "question": "Chart the number of hires per year.",
+    "expected": {
+      "type": "rows",
+      "rows": {
+        "2021": 8.0,
+        "2023": 8.0,
+        "2016": 8.0,
+        "2017": 7.0,
+        "2022": 7.0,
+        "2018": 6.0,
+        "2019": 6.0,
+        "2024": 6.0,
+        "2020": 4.0
+      },
+      "abs_tol": 0.01,
+      "rel_tol": 0.001
+    },
+    "chart": true,
+    "mode": "auto"
+  },
+  {
+    "id": "employees-10",
+    "files": [
+      "employees.xlsx"
+    ],
+    "question": "What is the total salary cost of each department?",
+    "expected": {
+      "type": "rows",
+      "rows": {
+        "Engineering": 2367000.0,
+        "Finance": 540600.0,
+        "Sales": 1033800.0,
+        "Support": 406600.0
+      },
+      "abs_tol": 0.01,
+      "rel_tol": 0.001
+    },
+    "chart": false,
+    "mode": "sql"
+  },
+  {
+    "id": "weather-01",
+    "files": [
+      "weather.csv"
+    ],
+    "question": "What is the average temperature in each city?",
+    "expected": {
+      "type": "rows",
+      "rows": {
+        "Bergen": 9.2693,
+        "Madrid": 16.3018,
+        "Oslo": 5.7655
+      },
+      "abs_tol": 0.05,
+      "rel_tol": 0.001
+    },
+    "chart": false,
+    "mode": "auto"
+  },
+  {
+    "id": "weather-02",
+    "files": [
+      "weather.csv"
+    ],
+    "question": "Which city had the most total rainfall?",
+    "expected": {
+      "type": "text",
+      "value": "Bergen"
+    },
+    "chart": false,
+    "mode": "auto"
+  },
+  {
+    "id": "weather-03",
+    "files": [
+      "weather.csv"
+    ],
+    "question": "How many temperature readings are missing?",
+    "expected": {
+      "type": "number",
+      "value": 18.0,
+      "abs_tol": 0.01,
+      "rel_tol": 0.001
+    },
+    "chart": false,
+    "mode": "auto"
+  },
+  {
+    "id": "weather-04",
+    "files": [
+      "weather.csv"
+    ],
+    "question": "On which date was the highest temperature recorded? Write it as YYYY-MM-DD.",
+    "expected": {
+      "type": "text",
+      "value": "2026-02-20"
+    },
+    "chart": false,
+    "mode": "auto"
+  },
+  {
+    "id": "weather-05",
+    "files": [
+      "weather.csv"
+    ],
+    "question": "On how many days did Bergen get more than 10 mm of rain?",
+    "expected": {
+      "type": "number",
+      "value": 33.0,
+      "abs_tol": 0.01,
+      "rel_tol": 0.001
+    },
+    "chart": false,
+    "mode": "auto"
+  },
+  {
+    "id": "weather-06",
+    "files": [
+      "weather.csv"
+    ],
+    "question": "Plot the monthly average temperature for each city as a line chart.",
+    "expected": {
+      "type": "none"
+    },
+    "chart": true,
+    "mode": "auto"
+  },
+  {
+    "id": "weather-07",
+    "files": [
+      "weather.csv"
+    ],
+    "question": "What is the correlation between temperature and rainfall across all readings?",
+    "expected": {
+      "type": "number",
+      "value": -0.0997,
+      "abs_tol": 0.01,
+      "rel_tol": 0.0
+    },
+    "chart": false,
+    "mode": "auto"
+  },
+  {
+    "id": "shop-01",
+    "files": [
+      "customers.csv",
+      "orders.csv"
+    ],
+    "question": "What is the total order amount per customer country?",
+    "expected": {
+      "type": "rows",
+      "rows": {
+        "Canada": 3324.61,
+        "Japan": 2849.76,
+        "Norway": 3193.32,
+        "Spain": 3551.56
+      },
+      "abs_tol": 0.01,
+      "rel_tol": 0.001
+    },
+    "chart": false,
+    "mode": "auto"
+  },
+  {
+    "id": "shop-02",
+    "files": [
+      "customers.csv",
+      "orders.csv"
+    ],
+    "question": "Which customer has spent the most in total?",
+    "expected": {
+      "type": "text",
+      "value": "Customer 28"
+    },
+    "chart": false,
+    "mode": "auto"
+  },
+  {
+    "id": "shop-03",
+    "files": [
+      "customers.csv",
+      "orders.csv"
+    ],
+    "question": "How many customers have never placed an order?",
+    "expected": {
+      "type": "number",
+      "value": 5.0,
+      "abs_tol": 0.01,
+      "rel_tol": 0.001
+    },
+    "chart": false,
+    "mode": "auto"
+  },
+  {
+    "id": "shop-04",
+    "files": [
+      "customers.csv",
+      "orders.csv"
+    ],
+    "question": "How many orders were placed by each customer segment?",
+    "expected": {
+      "type": "rows",
+      "rows": {
+        "Basic": 106.0,
+        "Premium": 44.0
+      },
+      "abs_tol": 0.01,
+      "rel_tol": 0.001
+    },
+    "chart": false,
+    "mode": "sql"
+  },
+  {
+    "id": "shop-05",
+    "files": [
+      "customers.csv",
+      "orders.csv"
+    ],
+    "question": "What is the average order amount for Premium customers?",
+    "expected": {
+      "type": "number",
+      "value": 86.92,
+      "abs_tol": 0.01,
+      "rel_tol": 0.001
+    },
+    "chart": false,
+    "mode": "auto"
+  }
+]

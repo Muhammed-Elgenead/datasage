@@ -165,3 +165,24 @@ def test_leftover_cleanup_tolerates_docker_down(tmp_path: Path) -> None:
     from app.sandbox.client import remove_leftover_containers
 
     assert remove_leftover_containers(Settings(sandbox_docker="no-such-docker-binary")) == 0
+
+
+def test_slow_docker_start_is_unavailable_and_still_cleaned_up(
+    s: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import subprocess
+
+    from app.sandbox import client
+
+    calls: list[tuple[str, ...]] = []
+
+    def fake_docker(settings, *args, timeout=30):  # type: ignore[no-untyped-def]
+        calls.append(args)
+        if args[0] == "run":
+            raise subprocess.TimeoutExpired("docker run", timeout)
+        return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(client, "_docker", fake_docker)
+    with pytest.raises(SandboxUnavailable, match="too long to start"):
+        run_code_sync(s, uuid.uuid4(), "1")
+    assert calls[-1][:2] == ("rm", "--force")

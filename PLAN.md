@@ -98,7 +98,9 @@ Status: ⬜ not started · 🟨 in progress · ✅ done
 
 ---
 
-## Phase 6 — Evals ⬜
+## Phase 6 — Evals ✅
+
+> Two full runs on `gemini-3.5-flash-lite` (commit 3cf3a2f): 33/34 each. Run 1 failed sales-10, the mixed-date trap (retry limit). Run 2 fixed it but regressed employees-09: the agent printed the counts instead of showing a table. Expect about one case of difference between runs.
 
 **Goal:** measure answer quality and catch regressions.
 
@@ -107,8 +109,8 @@ Status: ⬜ not started · 🟨 in progress · ✅ done
 - Results saved to `docs/evals/` as a dated report.
 
 **Done when:**
-- [ ] at least 30 questions across at least 3 datasets, with a scored report committed
-- [ ] the runner can be run with one command, and a regression is visible when compared with the previous report
+- [x] at least 30 questions across at least 3 datasets, with a scored report committed (34 cases, 4 datasets: `docs/evals/`)
+- [x] the runner can be run with one command, and a regression is visible when compared with the previous report (`uv run --project backend python -m evals.run`; the second report lists employees-09 as a regression and sales-10 as fixed)
 
 ---
 
