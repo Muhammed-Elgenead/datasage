@@ -49,7 +49,10 @@ Status: ⬜ not started · 🟨 in progress · ✅ done
 
 ---
 
-## Phase 3 — Agent loop with self-correction ⬜
+## Phase 3 — Agent loop with self-correction ✅
+
+> Verified 2026-11-17 on `gemini-3.5-flash-lite` with a messy sales CSV (prices as `"$12.50"` text, mixed ISO and DD/MM/YYYY dates): a monthly-revenue line chart (5 runs, one `NameError` fixed by the agent itself, 80 s) and a per-product revenue question (exact match with ground truth, 15 s).
+> Known issue for Phase 6: on mixed date formats the agent parses with `format="mixed", dayfirst=True`, which swaps day and month on some ISO dates, so the monthly numbers are off. The run reports `ok` because the code ran. Evals must check answers, not just statuses.
 
 **Goal:** the agent answers questions by writing code, running it, and fixing its own errors.
 
@@ -59,8 +62,8 @@ Status: ⬜ not started · 🟨 in progress · ✅ done
 - `POST /sessions/{id}/ask` runs the loop. Every message, tool call, and code run is stored.
 
 **Done when:**
-- [ ] tests with a mocked LLM cover: success on the first try, an error followed by a fix, reaching the retry limit, and reaching the max-iterations limit
-- [ ] a manual run against the real API answers a question that needs a chart, and one that recovers from an error
+- [x] tests with a mocked LLM cover: success on the first try, an error followed by a fix, reaching the retry limit, and reaching the max-iterations limit (plus refusal, max_tokens, parallel calls, unknown tools, API and sandbox failures, and storage)
+- [x] a manual run against the real API answers a question that needs a chart, and one that recovers from an error
 
 ---
 
@@ -97,7 +100,7 @@ Status: ⬜ not started · 🟨 in progress · ✅ done
 
 **Goal:** measure answer quality and catch regressions.
 
-- `evals/`: a set of fixed datasets plus questions with known correct answers (numbers, tables).
+- `evals/`: a set of fixed datasets plus questions with known correct answers (numbers, tables), including messy data (text-encoded numbers, mixed date formats; see the Phase 3 known issue).
 - A runner that sends each question through the real agent and scores it (exact or tolerance match, chart produced, number of self-correction retries, latency, tokens).
 - Results saved to `docs/evals/` as a dated report.
 

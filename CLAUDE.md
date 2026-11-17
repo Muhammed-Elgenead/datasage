@@ -10,7 +10,7 @@ These rules are permanent. Follow them in every session.
 |-----------|--------|
 | Backend   | Python 3.12, FastAPI, Pydantic v2 |
 | Database  | PostgreSQL 16, SQLAlchemy 2 (async), Alembic migrations |
-| LLM       | Anthropic SDK (`anthropic`) with native tool use. Model ID and API key come from env (`ANTHROPIC_MODEL`, `ANTHROPIC_API_KEY`). Never hardcode either |
+| LLM       | Two adapters behind one hand-written tool-use loop: Google Gemini (`google-genai`, the default) and Anthropic (`anthropic`), both with native tool use. `LLM_PROVIDER` picks one. Model IDs and API keys come from env (`GEMINI_MODEL`/`GEMINI_API_KEY`, `ANTHROPIC_MODEL`/`ANTHROPIC_API_KEY`). Never hardcode either. SDK code lives only in `app/agents/providers.py`; the loop stays provider-neutral |
 | Sandbox   | A separate, locked-down Docker container built from `sandbox-image/` |
 | Frontend  | React + Vite + TypeScript + Tailwind |
 | Runtime   | Docker Compose (postgres, backend, frontend; the backend starts sandbox containers) |

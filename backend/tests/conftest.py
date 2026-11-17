@@ -2,6 +2,7 @@ from collections.abc import AsyncIterator
 from pathlib import Path
 
 import pytest
+from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 
@@ -23,13 +24,23 @@ async def reset_test_db(app) -> None:  # type: ignore[no-untyped-def]
 
 @pytest.fixture
 def settings(tmp_path: Path) -> Settings:
-    return Settings(database_url=TEST_DB_URL or "", data_dir=tmp_path / "data", max_upload_mb=1)
+    return Settings(
+        database_url=TEST_DB_URL or "",
+        data_dir=tmp_path / "data",
+        max_upload_mb=1,
+        anthropic_model="test-model",
+    )
 
 
 @pytest.fixture
-async def client(settings: Settings) -> AsyncIterator[AsyncClient]:
+async def app(settings: Settings) -> AsyncIterator[FastAPI]:
     app = create_app(settings)
     await reset_test_db(app)
+    yield app
+    await app.state.db.dispose()
+
+
+@pytest.fixture
+async def client(app: FastAPI) -> AsyncIterator[AsyncClient]:
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
         yield c
-    await app.state.db.dispose()

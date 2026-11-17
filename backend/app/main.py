@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.agents.providers import LLMNotConfigured, LLMProvider, create_provider
 from app.api.health import router as health_router
 from app.api.sessions import router as sessions_router
 from app.core.config import Settings, get_settings
@@ -20,6 +21,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(title="DataSage", version="0.1.0", lifespan=lifespan)
     app.state.settings = settings
     app.state.db = Database(settings.database_url)  # connects lazily, on first query
+    # The app still starts without an LLM; /ask then answers 503 with the reason.
+    llm: LLMProvider | LLMNotConfigured
+    try:
+        llm = create_provider(settings)
+    except LLMNotConfigured as exc:
+        llm = exc
+    app.state.llm = llm
     app.include_router(health_router)
     app.include_router(sessions_router)
     return app
