@@ -30,7 +30,7 @@ dev = [
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
-addopts = "--basetemp=../.tmp/pytest"  # keep tmp_path on E:
+addopts = "--basetemp=.pytest-tmp"  # keep tmp_path on E: (inside backend/, so it exists in CI too)
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 
